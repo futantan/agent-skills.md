@@ -11,17 +11,14 @@ export type SkillBase = {
 };
 
 export type Skill = SkillBase & {
-  id: number;
+  id: string;
   category: string;
-  complexity: "Basic" | "Intermediate" | "Advanced";
-  status: "Active" | "Beta";
-  metrics: { accuracy: string; speed: string };
   tags: string[];
 };
 
 export const agentSkills: Skill[] = [
   {
-    id: 1,
+    id: "code-analysis",
     name: "Code Analysis",
     category: "Development",
     description:
@@ -29,15 +26,12 @@ export const agentSkills: Skill[] = [
     author: {
       name: "Ava Tran",
       url: "https://example.com/ava-tran",
-      avatarUrl: "https://example.com/avatars/ava-tran.png",
+      avatarUrl: "https://avatars.githubusercontent.com/u/6268441?v=4",
     },
-    complexity: "Advanced",
-    status: "Active",
-    metrics: { accuracy: "98%", speed: "Fast" },
     tags: ["AST", "Static Analysis", "Security"],
   },
   {
-    id: 2,
+    id: "api-integration",
     name: "API Integration",
     category: "Development",
     description:
@@ -45,15 +39,12 @@ export const agentSkills: Skill[] = [
     author: {
       name: "Diego Park",
       url: "https://example.com/diego-park",
-      avatarUrl: "https://example.com/avatars/diego-park.png",
+      avatarUrl: "https://avatars.githubusercontent.com/u/6268441?v=4",
     },
-    complexity: "Intermediate",
-    status: "Active",
-    metrics: { accuracy: "96%", speed: "Fast" },
     tags: ["REST", "GraphQL", "WebSocket"],
   },
   {
-    id: 3,
+    id: "documentation-generation",
     name: "Documentation Generation",
     category: "Documentation",
     description:
@@ -61,15 +52,12 @@ export const agentSkills: Skill[] = [
     author: {
       name: "Mira Sol",
       url: "https://example.com/mira-sol",
-      avatarUrl: "https://example.com/avatars/mira-sol.png",
+      avatarUrl: "https://avatars.githubusercontent.com/u/6268441?v=4",
     },
-    complexity: "Intermediate",
-    status: "Active",
-    metrics: { accuracy: "94%", speed: "Medium" },
     tags: ["Markdown", "JSDoc", "OpenAPI"],
   },
   {
-    id: 4,
+    id: "test-automation",
     name: "Test Automation",
     category: "Testing",
     description:
@@ -77,15 +65,12 @@ export const agentSkills: Skill[] = [
     author: {
       name: "Calvin Reed",
       url: "https://example.com/calvin-reed",
-      avatarUrl: "https://example.com/avatars/calvin-reed.png",
+      avatarUrl: "https://avatars.githubusercontent.com/u/6268441?v=4",
     },
-    complexity: "Advanced",
-    status: "Active",
-    metrics: { accuracy: "97%", speed: "Fast" },
     tags: ["Jest", "Playwright", "Coverage"],
   },
   {
-    id: 5,
+    id: "data-validation",
     name: "Data Validation",
     category: "Data",
     description:
@@ -93,15 +78,12 @@ export const agentSkills: Skill[] = [
     author: {
       name: "Nora Patel",
       url: "https://example.com/nora-patel",
-      avatarUrl: "https://example.com/avatars/nora-patel.png",
+      avatarUrl: "https://avatars.githubusercontent.com/u/6268441?v=4",
     },
-    complexity: "Basic",
-    status: "Active",
-    metrics: { accuracy: "99%", speed: "Very Fast" },
     tags: ["Zod", "Yup", "JSON Schema"],
   },
   {
-    id: 6,
+    id: "performance-optimization",
     name: "Performance Optimization",
     category: "Development",
     description:
@@ -109,15 +91,12 @@ export const agentSkills: Skill[] = [
     author: {
       name: "Hugo Lin",
       url: "https://example.com/hugo-lin",
-      avatarUrl: "https://example.com/avatars/hugo-lin.png",
+      avatarUrl: "https://avatars.githubusercontent.com/u/6268441?v=4",
     },
-    complexity: "Advanced",
-    status: "Active",
-    metrics: { accuracy: "95%", speed: "Medium" },
     tags: ["Profiling", "Optimization", "Metrics"],
   },
   {
-    id: 7,
+    id: "database-migration",
     name: "Database Migration",
     category: "Data",
     description:
@@ -125,15 +104,12 @@ export const agentSkills: Skill[] = [
     author: {
       name: "Priya Shah",
       url: "https://example.com/priya-shah",
-      avatarUrl: "https://example.com/avatars/priya-shah.png",
+      avatarUrl: "https://avatars.githubusercontent.com/u/6268441?v=4",
     },
-    complexity: "Advanced",
-    status: "Beta",
-    metrics: { accuracy: "93%", speed: "Medium" },
     tags: ["SQL", "Prisma", "Migration"],
   },
   {
-    id: 8,
+    id: "ui-component-builder",
     name: "UI Component Builder",
     category: "Frontend",
     description:
@@ -141,15 +117,12 @@ export const agentSkills: Skill[] = [
     author: {
       name: "Leo Kim",
       url: "https://example.com/leo-kim",
-      avatarUrl: "https://example.com/avatars/leo-kim.png",
+      avatarUrl: "https://avatars.githubusercontent.com/u/6268441?v=4",
     },
-    complexity: "Intermediate",
-    status: "Active",
-    metrics: { accuracy: "96%", speed: "Fast" },
     tags: ["React", "A11y", "Design System"],
   },
   {
-    id: 9,
+    id: "security-audit",
     name: "Security Audit",
     category: "Security",
     description:
@@ -157,15 +130,12 @@ export const agentSkills: Skill[] = [
     author: {
       name: "Rowan Bell",
       url: "https://example.com/rowan-bell",
-      avatarUrl: "https://example.com/avatars/rowan-bell.png",
+      avatarUrl: "https://avatars.githubusercontent.com/u/6268441?v=4",
     },
-    complexity: "Advanced",
-    status: "Active",
-    metrics: { accuracy: "98%", speed: "Medium" },
     tags: ["OWASP", "CVE", "Compliance"],
   },
   {
-    id: 10,
+    id: "ci-cd-pipeline",
     name: "CI/CD Pipeline",
     category: "DevOps",
     description:
@@ -173,15 +143,12 @@ export const agentSkills: Skill[] = [
     author: {
       name: "Selena Ortiz",
       url: "https://example.com/selena-ortiz",
-      avatarUrl: "https://example.com/avatars/selena-ortiz.png",
+      avatarUrl: "https://avatars.githubusercontent.com/u/6268441?v=4",
     },
-    complexity: "Advanced",
-    status: "Active",
-    metrics: { accuracy: "94%", speed: "Fast" },
     tags: ["GitHub Actions", "Docker", "K8s"],
   },
   {
-    id: 11,
+    id: "error-handling",
     name: "Error Handling",
     category: "Development",
     description:
@@ -189,15 +156,12 @@ export const agentSkills: Skill[] = [
     author: {
       name: "Jules Grant",
       url: "https://example.com/jules-grant",
-      avatarUrl: "https://example.com/avatars/jules-grant.png",
+      avatarUrl: "https://avatars.githubusercontent.com/u/6268441?v=4",
     },
-    complexity: "Intermediate",
-    status: "Active",
-    metrics: { accuracy: "97%", speed: "Fast" },
     tags: ["Logging", "Monitoring", "Alerts"],
   },
   {
-    id: 12,
+    id: "accessibility-checker",
     name: "Accessibility Checker",
     category: "Frontend",
     description:
@@ -205,11 +169,8 @@ export const agentSkills: Skill[] = [
     author: {
       name: "Tessa Nguyen",
       url: "https://example.com/tessa-nguyen",
-      avatarUrl: "https://example.com/avatars/tessa-nguyen.png",
+      avatarUrl: "https://avatars.githubusercontent.com/u/6268441?v=4",
     },
-    complexity: "Intermediate",
-    status: "Beta",
-    metrics: { accuracy: "95%", speed: "Fast" },
     tags: ["WCAG", "ARIA", "Screen Reader"],
   },
 ];

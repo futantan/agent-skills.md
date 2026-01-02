@@ -1,4 +1,3 @@
-import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
@@ -7,14 +6,9 @@ import {
   InputGroupInput,
 } from "@/components/ui/input-group";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { Github, Search } from "lucide-react";
 import { agentSkills } from "@/lib/skills";
+import Link from "next/link";
 
 
 const categories = [
@@ -156,18 +150,6 @@ export default function Home() {
                       className="group relative overflow-hidden border border-border/40 bg-card/50 p-6 backdrop-blur-sm transition-all hover:border-border hover:bg-card hover:shadow-lg hover:shadow-primary/5 animate-fade-in-up"
                       style={{ animationDelay: `${index * 50}ms` }}
                     >
-                      {/* Status Indicator */}
-                      <div className="absolute right-4 top-4">
-                        <Badge
-                          variant={
-                            skill.status === "Active" ? "default" : "secondary"
-                          }
-                          className="text-xs"
-                        >
-                          {skill.status}
-                        </Badge>
-                      </div>
-
                       <div className="mb-4">
                         <h3 className="mb-2 text-xl font-semibold text-foreground transition-colors group-hover:text-primary">
                           {skill.name}
@@ -189,63 +171,48 @@ export default function Home() {
                         ))}
                       </div>
 
-                      {/* Metrics */}
-                      <div className="flex items-center justify-between border-t border-border/40 pt-4">
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger className="flex items-center gap-1.5 text-sm cursor-help">
-                              <svg
-                                className="h-4 w-4 text-muted-foreground"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                                />
-                              </svg>
-                              <span className="font-medium text-foreground">
-                                {skill.metrics.accuracy}
-                              </span>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p>Accuracy Rate</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger className="flex items-center gap-1.5 text-sm cursor-help">
-                              <svg
-                                className="h-4 w-4 text-muted-foreground"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M13 10V3L4 14h7v7l9-11h-7z"
-                                />
-                              </svg>
-                              <span className="font-medium text-foreground">
-                                {skill.metrics.speed}
-                              </span>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p>Processing Speed</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-
-                        <Badge variant="outline" className="text-xs">
-                          {skill.complexity}
-                        </Badge>
+                      {/* Author */}
+                      <div className="flex items-center justify-between gap-4 border-t border-border/40 pt-4">
+                        {skill.author ? (
+                          <div className="flex items-center gap-3">
+                            {skill.author.avatarUrl ? (
+                              <img
+                                alt={skill.author.name}
+                                className="h-8 w-8 rounded-full border border-border/60 object-cover"
+                                src={skill.author.avatarUrl}
+                              />
+                            ) : null}
+                            <div className="text-sm text-muted-foreground">
+                              {skill.author.url ? (
+                                <a
+                                  className="font-medium text-foreground transition-colors hover:text-primary"
+                                  href={skill.author.url}
+                                  rel="noopener noreferrer"
+                                  target="_blank"
+                                >
+                                  {skill.author.name}
+                                </a>
+                              ) : (
+                                <span className="font-medium text-foreground">
+                                  {skill.author.name}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        ) : (
+                          <span className="text-sm text-muted-foreground">
+                            No author info
+                          </span>
+                        )}
+                        <Link
+                          className={buttonVariants({
+                            variant: "outline",
+                            size: "sm",
+                          })}
+                          href={`/skills/${skill.id}`}
+                        >
+                          View details
+                        </Link>
                       </div>
 
                       {/* Hover Effect */}
