@@ -29,7 +29,7 @@ export function SiteHeader() {
           <a
             aria-label="GitHub"
             className={buttonVariants({ variant: "ghost", size: "icon" })}
-            href="TODO:"
+            href="https://github.com/futantan/agent-skills.md"
             rel="noopener noreferrer"
             target="_blank"
           >
