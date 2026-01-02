@@ -1,3 +1,5 @@
+import { SiteFooter } from "@/components/site-footer";
+import { SiteHeader } from "@/components/site-header";
 import { buttonVariants } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
@@ -6,10 +8,9 @@ import {
   InputGroupInput,
 } from "@/components/ui/input-group";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Github, Search } from "lucide-react";
 import { agentSkills } from "@/lib/skills";
+import { Search } from "lucide-react";
 import Link from "next/link";
-
 
 const categories = [
   "All",
@@ -25,39 +26,7 @@ const categories = [
 export default function Home() {
   return (
     <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-50 w-full border-b border-border/20 backdrop-blur-md">
-        <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-6">
-          <a
-            className="text-lg font-bold tracking-tight transition-opacity hover:opacity-80"
-            href="/"
-          >
-            Logo
-          </a>
-          <nav className="flex items-center gap-2">
-            <a
-              className={buttonVariants({ variant: "default", size: "sm" })}
-              href="/"
-            >
-              Explore
-            </a>
-            <a
-              className={buttonVariants({ variant: "ghost", size: "sm" })}
-              href="/submit"
-            >
-              Submit
-            </a>
-            <a
-              aria-label="GitHub"
-              className={buttonVariants({ variant: "ghost", size: "icon" })}
-              href="TODO:"
-              rel="noopener noreferrer"
-              target="_blank"
-            >
-              <Github />
-            </a>
-          </nav>
-        </div>
-      </header>
+      <SiteHeader />
 
       <div className="relative -mt-14 pt-14">
         <div className="pointer-events-none absolute inset-0 overflow-hidden">
@@ -118,7 +87,7 @@ export default function Home() {
       </div>
 
       {/* Skills Grid */}
-      <main className="mx-auto max-w-7xl px-6 pt-10 pb-16">
+      <main className="mx-auto container px-6 pt-10 pb-16">
         <Tabs defaultValue="All" className="w-full">
           <div className="mb-12 flex flex-col gap-4">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -225,38 +194,7 @@ export default function Home() {
         </Tabs>
       </main>
 
-      {/* Footer */}
-      <footer className="border-t border-border/40">
-        <div className="mx-auto max-w-7xl px-6 py-12">
-          <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
-            <p className="text-sm text-muted-foreground">
-              Built with precision and care for the modern developer
-            </p>
-            <div className="flex items-center gap-4">
-              <a
-                href="#"
-                className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-              >
-                Documentation
-              </a>
-              <span className="text-muted-foreground">·</span>
-              <a
-                href="#"
-                className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-              >
-                API Reference
-              </a>
-              <span className="text-muted-foreground">·</span>
-              <a
-                href="#"
-                className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-              >
-                Support
-              </a>
-            </div>
-          </div>
-        </div>
-      </footer>
+      <SiteFooter />
     </div>
   );
 }

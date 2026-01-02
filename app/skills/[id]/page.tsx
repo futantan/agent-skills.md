@@ -1,6 +1,6 @@
-import { buttonVariants } from "@/components/ui/button";
+import { SiteFooter } from "@/components/site-footer";
+import { SiteHeader } from "@/components/site-header";
 import { agentSkills } from "@/lib/skills";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 
 type SkillDetailPageProps = {
@@ -24,24 +24,9 @@ export default async function SkillDetailPage({
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-50 w-full border-b border-border/20 backdrop-blur-md">
-        <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-6">
-          <Link
-            className="text-lg font-bold tracking-tight transition-opacity hover:opacity-80"
-            href="/"
-          >
-            Logo
-          </Link>
-          <Link
-            className={buttonVariants({ variant: "ghost", size: "sm" })}
-            href="/"
-          >
-            Back to skills
-          </Link>
-        </div>
-      </header>
+      <SiteHeader />
 
-      <main className="mx-auto max-w-6xl px-6 py-14">
+      <main className="mx-auto container px-6 py-14">
         <div className="relative overflow-hidden rounded-2xl border border-border/40 bg-card/60 p-10 shadow-xl shadow-primary/5">
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(100%_100%_at_0%_0%,rgba(56,189,248,0.12),transparent_55%)]" />
           <div className="relative">
@@ -144,6 +129,8 @@ export default async function SkillDetailPage({
           </aside>
         </div>
       </main>
+
+      <SiteFooter />
     </div>
   );
 }
