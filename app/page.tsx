@@ -1,6 +1,5 @@
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
-import { buttonVariants } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
   InputGroup,
@@ -9,7 +8,7 @@ import {
 } from "@/components/ui/input-group";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { agentSkills } from "@/lib/skills";
-import { Search } from "lucide-react";
+import { ArrowRight, Search } from "lucide-react";
 import Link from "next/link";
 
 const categories = [
@@ -114,79 +113,65 @@ export default function Home() {
                     (skill) => category === "All" || skill.category === category
                   )
                   .map((skill, index) => (
-                    <Card
+                    <Link
                       key={skill.id}
-                      className="group relative overflow-hidden border border-border/40 bg-card/50 p-6 backdrop-blur-sm transition-all hover:border-border hover:bg-card hover:shadow-lg hover:shadow-primary/5 animate-fade-in-up"
+                      className="group block"
+                      href={`/skills/${skill.id}`}
                       style={{ animationDelay: `${index * 50}ms` }}
                     >
-                      <div className="mb-4">
-                        <h3 className="mb-2 text-xl font-semibold text-foreground transition-colors group-hover:text-primary">
-                          {skill.name}
-                        </h3>
-                        <p className="text-sm text-muted-foreground">
-                          {skill.description}
-                        </p>
-                      </div>
+                      <Card className="relative overflow-hidden border border-border/40 bg-card/50 p-6 backdrop-blur-sm transition-all hover:border-border hover:bg-card hover:shadow-lg hover:shadow-primary/5 animate-fade-in-up">
+                        <div className="mb-4">
+                          <h3 className="mb-2 text-xl font-semibold text-foreground transition-colors group-hover:text-primary">
+                            {skill.name}
+                          </h3>
+                          <p className="text-sm text-muted-foreground">
+                            {skill.description}
+                          </p>
+                        </div>
 
-                      {/* Tags */}
-                      <div className="mb-4 flex flex-wrap gap-2">
-                        {skill.tags.map((tag) => (
-                          <span
-                            key={tag}
-                            className="inline-flex items-center rounded-md border border-border/40 bg-muted/30 px-2 py-0.5 text-xs font-medium text-muted-foreground"
-                          >
-                            {tag}
-                          </span>
-                        ))}
-                      </div>
+                        {/* Tags */}
+                        <div className="mb-4 flex flex-wrap gap-2">
+                          {skill.tags.map((tag) => (
+                            <span
+                              key={tag}
+                              className="inline-flex items-center rounded-md border border-border/40 bg-muted/30 px-2 py-0.5 text-xs font-medium text-muted-foreground"
+                            >
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
 
-                      {/* Author */}
-                      <div className="flex items-center justify-between gap-4 border-t border-border/40 pt-4">
-                        {skill.author ? (
-                          <div className="flex items-center gap-3">
-                            {skill.author.avatarUrl ? (
-                              <img
-                                alt={skill.author.name}
-                                className="h-8 w-8 rounded-full border border-border/60 object-cover"
-                                src={skill.author.avatarUrl}
-                              />
-                            ) : null}
-                            <div className="text-sm text-muted-foreground">
-                              {skill.author.url ? (
-                                <a
-                                  className="font-medium text-foreground transition-colors hover:text-primary"
-                                  href={skill.author.url}
-                                  rel="noopener noreferrer"
-                                  target="_blank"
-                                >
-                                  {skill.author.name}
-                                </a>
-                              ) : (
+                        {/* Author */}
+                        <div className="flex items-center justify-between gap-4 border-t border-border/40 pt-4">
+                          {skill.author ? (
+                            <div className="flex items-center gap-3">
+                              {skill.author.avatarUrl ? (
+                                <img
+                                  alt={skill.author.name}
+                                  className="h-8 w-8 rounded-full border border-border/60 object-cover"
+                                  src={skill.author.avatarUrl}
+                                />
+                              ) : null}
+                              <div className="text-sm text-muted-foreground">
                                 <span className="font-medium text-foreground">
                                   {skill.author.name}
                                 </span>
-                              )}
+                              </div>
                             </div>
-                          </div>
-                        ) : (
-                          <span className="text-sm text-muted-foreground">
-                            No author info
+                          ) : (
+                            <span className="text-sm text-muted-foreground">
+                              No author info
+                            </span>
+                          )}
+                          <span className={"flex items-center gap-2"}>
+                            View details <ArrowRight size="16" />
                           </span>
-                        )}
-                        <Link
-                          className={buttonVariants({
-                            variant: "outline",
-                            size: "sm",
-                          })}
-                          href={`/skills/${skill.id}`}
-                        >
-                          View details
-                        </Link>
-                      </div>
+                        </div>
 
-                      {/* Hover Effect */}
-                      <div className="absolute inset-0 -z-10 bg-linear-to-br from-primary/5 via-transparent to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
-                    </Card>
+                        {/* Hover Effect */}
+                        <div className="absolute inset-0 -z-10 bg-linear-to-br from-primary/5 via-transparent to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
+                      </Card>
+                    </Link>
                   ))}
               </div>
             </TabsContent>
