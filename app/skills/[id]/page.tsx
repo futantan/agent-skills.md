@@ -23,10 +23,10 @@ export default async function SkillDetailPage({
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       <SiteHeader />
 
-      <main className="mx-auto container px-6 py-14">
+      <main className="mx-auto container flex-1 px-6 py-14">
         <div className="relative overflow-hidden rounded-2xl border border-border/40 bg-card/60 p-10 shadow-xl shadow-primary/5">
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(100%_100%_at_0%_0%,rgba(56,189,248,0.12),transparent_55%)]" />
           <div className="relative">
