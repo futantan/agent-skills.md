@@ -8,24 +8,17 @@ import {
 } from "@/components/ui/input-group";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { client } from "@/lib/api/orpc";
-import { agentSkills } from "@/lib/skills";
 import { ArrowRight, Search } from "lucide-react";
 import Link from "next/link";
 
-const categories = [
-  "All",
-  "Development",
-  "Frontend",
-  "Data",
-  "Testing",
-  "Security",
-  "DevOps",
-  "Documentation",
-];
-
 export default async function Home() {
-  const planet = await client.planet.find({ id: 1 });
-  console.log(planet, "planet");
+  const skills = await client.skills.list();
+  const categories = [
+    "All",
+    ...Array.from(
+      new Set(skills.map((skill) => skill.category).filter(Boolean))
+    ),
+  ];
 
   return (
     <div className="min-h-screen bg-background">
@@ -112,7 +105,7 @@ export default async function Home() {
           {categories.map((category) => (
             <TabsContent key={category} value={category} className="mt-0">
               <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                {agentSkills
+                {skills
                   .filter(
                     (skill) => category === "All" || skill.category === category
                   )

@@ -1,52 +1,38 @@
-import { os } from '@orpc/server'
-import * as z from 'zod'
+import { agentSkills } from "@/lib/skills";
+import { os } from "@orpc/server";
+import * as z from "zod";
 
-const PlanetSchema = z.object({
-  id: z.number().int().min(1),
+const SkillAuthorSchema = z
+  .object({
+    name: z.string(),
+    url: z.string().url().optional(),
+    avatarUrl: z.string().url().optional(),
+  })
+  .optional();
+
+const SkillSchema = z.object({
+  id: z.string(),
   name: z.string(),
-  description: z.string().optional(),
-})
+  description: z.string(),
+  category: z.string().nullable().optional(),
+  tags: z.array(z.string()),
+  author: SkillAuthorSchema,
+});
 
-const listPlanet = os
-  .input(
-    z.object({
-      limit: z.number().int().min(1).max(100).optional(),
-      cursor: z.number().int().min(0).default(0),
-    }),
-  )
+const listSkills = os.handler(async () => {
+  return agentSkills;
+});
+
+const findSkill = os
+  .input(z.object({ id: z.string() }))
   .handler(async ({ input }) => {
-    // your list code here
-    return [{ id: 1, name: 'name' }]
-  })
-
-const findPlanet = os
-  .input(PlanetSchema.pick({ id: true }))
-  .handler(async ({ input }) => {
-    // your find code here
-    return { id: 1, name: 'name' }
-  })
-
-const createPlanet = os
-  .$context<{}>()
-  // .use(({ context, next }) => {
-  //   const user = parseJWT(context.headers.authorization?.split(' ')[1])
-
-  //   if (user) {
-  //     return next({ context: { user } })
-  //   }
-
-  //   throw new ORPCError('UNAUTHORIZED')
-  // })
-  .input(PlanetSchema.omit({ id: true }))
-  .handler(async ({ input, context }) => {
-    // your create code here
-    return { id: 1, name: 'name' }
-  })
+    const skill = agentSkills.find((item) => item.id === input.id);
+    return skill ?? null;
+  });
 
 export const router = {
-  planet: {
-    list: listPlanet,
-    find: findPlanet,
-    create: createPlanet
-  }
-}
+  skills: {
+    list: listSkills,
+    find: findSkill,
+  },
+};
