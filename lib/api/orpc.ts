@@ -3,6 +3,7 @@ import { createORPCClient } from '@orpc/client'
 import { RPCLink } from '@orpc/client/fetch'
 import { BatchLinkPlugin } from '@orpc/client/plugins'
 import type { RouterClient } from '@orpc/server'
+import { createRouterUtils } from '@orpc/tanstack-query'
 
 /**
  * This is part of the Optimize SSR setup.
@@ -36,4 +37,4 @@ const link = new RPCLink({
 
 export const client: RouterClient<typeof router> = globalThis.$client ?? createORPCClient(link)
 
-// export const orpc = createRouterUtils(client)
+export const orpc = createRouterUtils(client)

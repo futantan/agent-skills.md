@@ -1,3 +1,4 @@
+import { Providers } from "@/components/providers";
 import "@/lib/api/orpc.server";
 import type { Metadata } from "next";
 import { Figtree, Geist, Geist_Mono } from "next/font/google";
@@ -31,7 +32,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {children}
+        <Providers>{children}</Providers>
       </body>
     </html>
   );
