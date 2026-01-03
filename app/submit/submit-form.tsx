@@ -20,6 +20,7 @@ type SubmitStatus = "idle" | "loading" | "success" | "error";
 type SubmitResult = {
   repoId: string;
   skillsAdded: number;
+  alreadyExists?: boolean;
 };
 
 export function SubmitForm() {
@@ -28,13 +29,14 @@ export function SubmitForm() {
   const [message, setMessage] = useState<string | null>(null);
   const [result, setResult] = useState<SubmitResult | null>(null);
 
-  const helperText = useMemo(
-    () =>
-      status === "success" && result
-        ? `Parsed ${result.skillsAdded} skills from ${result.repoId}.`
-        : "Examples: https://github.com/vercel/ai or vercel/ai.",
-    [result, status]
-  );
+  const helperText = useMemo(() => {
+    if (status === "success" && result) {
+      return result.alreadyExists
+        ? `${result.repoId} already exists.`
+        : `Parsed ${result.skillsAdded} skills from ${result.repoId}.`;
+    }
+    return "Examples: https://github.com/vercel/ai or vercel/ai.";
+  }, [result, status]);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -134,9 +136,13 @@ export function SubmitForm() {
           <div className="flex items-start gap-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3 text-sm text-emerald-900 dark:text-emerald-100">
             <CheckCircle2 className="mt-0.5 h-4 w-4" />
             <div>
-              <p className="font-medium">Repo captured.</p>
+              <p className="font-medium">
+                {result.alreadyExists ? "Repo already exists." : "Repo captured."}
+              </p>
               <p className="text-xs text-emerald-900/80 dark:text-emerald-100/80">
-                {result.repoId} added with {result.skillsAdded} skills.
+                {result.alreadyExists
+                  ? "Submit a different repository to add new skills."
+                  : `${result.repoId} added with ${result.skillsAdded} skills.`}
               </p>
             </div>
           </div>

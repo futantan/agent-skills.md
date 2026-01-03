@@ -1,7 +1,7 @@
 import { db } from "@/db";
 import { reposTable, skillsTable } from "@/db/schema";
 import { fetchSkillsFromRepo, parseGitHubRepo } from "@/lib/skills-parser";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 
 type GitHubRepoInfo = {
   html_url?: string;
@@ -15,6 +15,20 @@ export async function submitRepo(repoInput: string, token?: string) {
   const parsed = parseGitHubRepo(repoInput);
   if (!parsed) {
     throw new Error("Invalid GitHub repository URL.");
+  }
+
+  const [existingRepo] = await db
+    .select({ id: reposTable.id })
+    .from(reposTable)
+    .where(and(eq(reposTable.owner, parsed.owner), eq(reposTable.name, parsed.repo)))
+    .limit(1);
+
+  if (existingRepo) {
+    return {
+      repoId: existingRepo.id,
+      skillsAdded: 0,
+      alreadyExists: true,
+    };
   }
 
   const headers = token ? { Authorization: `Bearer ${token}` } : undefined;
