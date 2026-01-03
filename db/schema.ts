@@ -1,8 +1,55 @@
-import { integer, pgTable, varchar } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
+import {
+  index,
+  integer,
+  pgTable,
+  text,
+  timestamp,
+  uniqueIndex,
+  varchar,
+} from "drizzle-orm/pg-core";
 
-export const usersTable = pgTable("users", {
-  id: integer().primaryKey().generatedAlwaysAsIdentity(),
-  name: varchar({ length: 255 }).notNull(),
-  age: integer().notNull(),
-  email: varchar({ length: 255 }).notNull().unique(),
-});
+export const reposTable = pgTable(
+  "repos",
+  {
+    id: varchar({ length: 255 }).primaryKey(),
+    owner: varchar({ length: 128 }).notNull(),
+    name: varchar({ length: 128 }).notNull(),
+    url: varchar({ length: 512 }).notNull(),
+    license: varchar({ length: 128 }),
+    stars: integer().notNull().default(0),
+    forks: integer().notNull().default(0),
+    ownerName: varchar({ length: 128 }),
+    ownerUrl: varchar({ length: 512 }),
+    ownerAvatarUrl: varchar({ length: 512 }),
+    lastParsedAt: timestamp({ withTimezone: true }),
+    createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("repos_owner_name_unique").on(table.owner, table.name),
+  ]
+);
+
+export const skillsTable = pgTable(
+  "skills",
+  {
+    id: varchar({ length: 255 }).primaryKey(),
+    repoId: varchar({ length: 255 })
+      .notNull()
+      .references(() => reposTable.id, { onDelete: "cascade" }),
+    name: varchar({ length: 128 }).notNull(),
+    description: text().notNull(),
+    category: varchar({ length: 64 }),
+    tags: text().array().notNull().default(sql`'{}'::text[]`),
+    authorName: varchar({ length: 128 }),
+    authorUrl: varchar({ length: 512 }),
+    authorAvatarUrl: varchar({ length: 512 }),
+    createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("skills_category_idx").on(table.category),
+    index("skills_tags_gin_idx").using("gin", table.tags),
+  ]
+);
