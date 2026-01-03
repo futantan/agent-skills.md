@@ -7,6 +7,7 @@ import {
   InputGroupInput,
 } from "@/components/ui/input-group";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { client } from "@/lib/api/orpc";
 import { agentSkills } from "@/lib/skills";
 import { ArrowRight, Search } from "lucide-react";
 import Link from "next/link";
@@ -22,7 +23,10 @@ const categories = [
   "Documentation",
 ];
 
-export default function Home() {
+export default async function Home() {
+  const planet = await client.planet.find({ id: 1 });
+  console.log(planet, "planet");
+
   return (
     <div className="min-h-screen bg-background">
       <SiteHeader />

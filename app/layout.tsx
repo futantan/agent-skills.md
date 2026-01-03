@@ -1,5 +1,6 @@
+import "@/lib/api/orpc.server";
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Figtree } from "next/font/google";
+import { Figtree, Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
 const figtree = Figtree({ subsets: ["latin"], variable: "--font-sans" });
@@ -16,7 +17,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Agent Skills - AI-Powered Development Capabilities",
-  description: "Production-ready AI capabilities for your development workflow. Enhance your projects with intelligent automation and analysis.",
+  description:
+    "Production-ready AI capabilities for your development workflow. Enhance your projects with intelligent automation and analysis.",
 };
 
 export default function RootLayout({
