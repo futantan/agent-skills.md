@@ -1,26 +1,10 @@
 import { db } from "@/db";
 import { skillsTable } from "@/db/schema";
 import { submitRepo } from "@/lib/repos";
+import { env } from "@/env";
 import { os } from "@orpc/server";
 import { desc, eq } from "drizzle-orm";
 import * as z from "zod";
-
-const SkillAuthorSchema = z
-  .object({
-    name: z.string(),
-    url: z.string().url().optional(),
-    avatarUrl: z.string().url().optional(),
-  })
-  .optional();
-
-const SkillSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  description: z.string(),
-  category: z.string().nullable().optional(),
-  tags: z.array(z.string()),
-  author: SkillAuthorSchema,
-});
 
 const listSkills = os.handler(async () => {
   const rows = await db
@@ -49,8 +33,7 @@ const submitRepoHandler = os
   )
   .handler(async ({ input, context }) => {
     const headers = (context as { headers?: Headers })?.headers;
-    const token =
-      headers?.get("x-github-token") ?? process.env.GITHUB_TOKEN ?? undefined;
+    const token = headers?.get("x-github-token") ?? env.GITHUB_TOKEN ?? undefined;
     return submitRepo(input.url, token);
   });
 

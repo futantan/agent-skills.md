@@ -1,4 +1,5 @@
 import { fetchSkillsFromRepo } from "@/lib/skills-parser";
+import { env } from "@/env";
 import { NextResponse } from "next/server";
 
 // TODO: change to post request
@@ -6,7 +7,7 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const repoInput = searchParams.get("repo") ?? searchParams.get("url");
   const token =
-    request.headers.get("x-github-token") ?? process.env.GITHUB_TOKEN ?? undefined;
+    request.headers.get("x-github-token") ?? env.GITHUB_TOKEN ?? undefined;
 
   if (!repoInput) {
     return NextResponse.json(
