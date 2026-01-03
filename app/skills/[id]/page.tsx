@@ -1,22 +1,18 @@
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
-import { agentSkills } from "@/lib/skills";
+import { client } from "@/lib/api/orpc";
 import { notFound } from "next/navigation";
 
 type SkillDetailPageProps = {
   params: Promise<{ id: string }>;
 };
 
-export function generateStaticParams() {
-  return agentSkills.map((skill) => ({ id: skill.id }));
-}
-
 export default async function SkillDetailPage({
   params,
 }: SkillDetailPageProps) {
   const { id } = await params;
   const decodedId = decodeURIComponent(id);
-  const skill = agentSkills.find((item) => item.id === decodedId);
+  const skill = await client.skills.find({ id: decodedId });
 
   if (!skill) {
     notFound();

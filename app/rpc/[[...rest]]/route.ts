@@ -2,6 +2,8 @@ import { router } from '@/lib/api/router'
 import { onError } from '@orpc/server'
 import { RPCHandler } from '@orpc/server/fetch'
 
+export const runtime = 'nodejs'
+
 const rpcHandler = new RPCHandler(router, {
   interceptors: [
     onError((error) => {

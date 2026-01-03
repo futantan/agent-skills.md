@@ -1,4 +1,4 @@
-import { router } from '@/lib/api/router'
+import type { router } from '@/lib/api/router'
 import { createORPCClient } from '@orpc/client'
 import { RPCLink } from '@orpc/client/fetch'
 import { BatchLinkPlugin } from '@orpc/client/plugins'
