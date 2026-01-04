@@ -1,5 +1,5 @@
 import { resolveSkillsPath } from "@/lib/skill-path";
-import type { Skill } from "@/lib/skills";
+import { Skill } from '@/lib/types';
 
 type ParsedRepo = {
   owner: string;
