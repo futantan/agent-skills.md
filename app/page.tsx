@@ -36,13 +36,14 @@ export default async function Home() {
                 </span>
               </div>
 
-              <h1 className="mb-6 text-5xl font-bold tracking-tight text-foreground sm:text-6xl lg:text-7xl animate-fade-in-up [animation-delay:100ms]">
-                Agent Skills
+              <h1 className="mb-6 text-4xl font-bold tracking-tight text-foreground sm:text-6xl lg:text-7xl animate-fade-in-up [animation-delay:100ms]">
+                Find awesome <br />
+                <span className="text-primary">Agent Skills</span>
               </h1>
 
               <p className="text-lg leading-8 text-muted-foreground animate-fade-in-up [animation-delay:200ms]">
-                Production-ready AI capabilities for your workflow. Enhance your
-                projects with Agent Skills
+                Agent-Skills.md is a agent skills marketplace, to find the right
+                agent skills for you.
               </p>
             </div>
           </div>
