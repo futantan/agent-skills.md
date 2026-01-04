@@ -30,7 +30,7 @@ export function SkillsExplorer({ initialSkills }: SkillsExplorerProps) {
   const [activeCategory, setActiveCategory] = useState("All");
   const activeQuery = urlQuery.trim();
 
-  const searchQuery = useQuery(
+  const searchQuery = useQuery<Skill[]>(
     activeQuery
       ? orpc.skills.search.queryOptions({
           input: { query: activeQuery },
@@ -140,7 +140,7 @@ export function SkillsExplorer({ initialSkills }: SkillsExplorerProps) {
 
                         {skill.tags.length > 0 && (
                           <div className="mb-4 flex flex-wrap gap-2">
-                            {skill.tags.map((tag) => (
+                            {skill.tags.map((tag: string) => (
                               <span
                                 key={tag}
                                 className="inline-flex items-center rounded-md border border-border/40 bg-muted/30 px-2 py-0.5 text-xs font-medium text-muted-foreground"

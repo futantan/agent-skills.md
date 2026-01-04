@@ -1,5 +1,5 @@
 import { resolveSkillsPath } from "@/lib/skill-path";
-import { Skill } from '@/lib/types';
+import { ParsedSkill } from "@/lib/types";
 
 type ParsedRepo = {
   owner: string;
@@ -29,7 +29,7 @@ const API_BASE = "https://api.github.com";
 export async function fetchSkillsFromRepo(
   repoInput: string,
   options: FetchOptions = {}
-): Promise<Skill[]> {
+): Promise<ParsedSkill[]> {
   const repo = parseGitHubRepo(repoInput);
   if (!repo) {
     throw new Error("Invalid GitHub repository URL");
@@ -54,7 +54,7 @@ export async function fetchSkillsFromRepo(
     (item: GitHubContent) => item.type === "dir"
   );
 
-  const skills: Skill[] = [];
+  const skills: ParsedSkill[] = [];
 
   for (const dir of skillDirs) {
     const skillRoot = basePath ? `${basePath}/${dir.name}` : dir.name;
