@@ -104,7 +104,7 @@ export default async function Home() {
 
           {categories.map((category) => (
             <TabsContent key={category} value={category} className="mt-0">
-              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid auto-rows-fr gap-6 sm:grid-cols-2 lg:grid-cols-3">
                 {skills
                   .filter(
                     (skill) => category === "All" || skill.category === category
@@ -112,11 +112,11 @@ export default async function Home() {
                   .map((skill, index) => (
                     <Link
                       key={skill.id}
-                      className="group block"
+                      className="group block h-full"
                       href={`/skills/${skill.id}`}
                       style={{ animationDelay: `${index * 50}ms` }}
                     >
-                      <Card className="relative overflow-hidden border border-border/40 bg-card/50 p-6 backdrop-blur-sm transition-all hover:border-border hover:bg-card hover:shadow-lg hover:shadow-primary/5 animate-fade-in-up">
+                      <Card className="relative h-full overflow-hidden border border-border/40 bg-card/50 p-6 backdrop-blur-sm transition-all hover:border-border hover:bg-card hover:shadow-lg hover:shadow-primary/5 animate-fade-in-up">
                         <div className="mb-4">
                           <h3 className="mb-2 text-xl font-semibold text-foreground transition-colors group-hover:text-primary">
                             {skill.name}
@@ -127,19 +127,21 @@ export default async function Home() {
                         </div>
 
                         {/* Tags */}
-                        <div className="mb-4 flex flex-wrap gap-2">
-                          {skill.tags.map((tag) => (
-                            <span
-                              key={tag}
-                              className="inline-flex items-center rounded-md border border-border/40 bg-muted/30 px-2 py-0.5 text-xs font-medium text-muted-foreground"
-                            >
-                              {tag}
-                            </span>
-                          ))}
-                        </div>
+                        {skill.tags.length > 0 && (
+                          <div className="mb-4 flex flex-wrap gap-2">
+                            {skill.tags.map((tag) => (
+                              <span
+                                key={tag}
+                                className="inline-flex items-center rounded-md border border-border/40 bg-muted/30 px-2 py-0.5 text-xs font-medium text-muted-foreground"
+                              >
+                                {tag}
+                              </span>
+                            ))}
+                          </div>
+                        )}
 
                         {/* Author */}
-                        <div className="flex items-center justify-between gap-4 border-t border-border/40 pt-4">
+                        <div className="mt-auto flex items-center justify-between gap-4 border-t border-border/40 pt-4">
                           {skill.author ? (
                             <div className="flex items-center gap-3">
                               {skill.author.avatarUrl ? (
