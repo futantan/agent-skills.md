@@ -1,10 +1,12 @@
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 
 import { Providers } from "@/components/providers";
+import { env } from '@/env';
 import "@/lib/api/orpc.server";
 import { siteConfig } from "@/lib/site-config";
 import type { Metadata } from "next";
 import { Figtree, Geist, Geist_Mono } from "next/font/google";
+import Script from 'next/script';
 import "./globals.css";
 
 const figtree = Figtree({ subsets: ["latin"], variable: "--font-sans" });
@@ -34,6 +36,11 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+        <Script
+          defer
+          data-domain={env.NEXT_PUBLIC_PLAUSIBLE_DOMAIN}
+          src={env.NEXT_PUBLIC_PLAUSIBLE_DATA_DOMAIN}
+        >
         <NuqsAdapter>
           <Providers>{children}</Providers>
         </NuqsAdapter>
