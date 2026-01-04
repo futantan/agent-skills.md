@@ -4,6 +4,7 @@ import { ParsedSkill } from "@/lib/types";
 type ParsedRepo = {
   owner: string;
   repo: string;
+  skillsPath?: string;
 };
 
 type SkillFrontmatter = {
@@ -39,7 +40,7 @@ export async function fetchSkillsFromRepo(
     ? { Authorization: `Bearer ${options.token}` }
     : undefined;
 
-  const basePath = resolveSkillsPath(options.skillsPath);
+  const basePath = resolveSkillsPath(options.skillsPath ?? repo.skillsPath);
   const basePathSegment = basePath ? `/${basePath}` : "";
   const skillsDir = await getJson(
     `${API_BASE}/repos/${repo.owner}/${repo.repo}/contents${basePathSegment}`,
@@ -89,9 +90,14 @@ export async function fetchSkillsFromRepo(
 
 export function parseGitHubRepo(input: string): ParsedRepo | null {
   const trimmed = input.trim().replace(/\.git$/, "");
-  const directMatch = /^([\w.-]+)\/([\w.-]+)$/.exec(trimmed);
+  const directMatch = /^([\w.-]+)\/([\w.-]+)(?:\/(.+))?$/.exec(trimmed);
   if (directMatch) {
-    return { owner: directMatch[1], repo: directMatch[2] };
+    const rawPath = directMatch[3];
+    return {
+      owner: directMatch[1],
+      repo: directMatch[2],
+      skillsPath: rawPath ? resolveSkillsPath(rawPath) : undefined,
+    };
   }
 
   try {
@@ -99,11 +105,29 @@ export function parseGitHubRepo(input: string): ParsedRepo | null {
     if (url.hostname !== "github.com") {
       return null;
     }
-    const parts = url.pathname.replace(/^\/+/, "").split("/");
+    const parts = url.pathname.replace(/^\/+/, "").split("/").filter(Boolean);
     if (parts.length < 2) {
       return null;
     }
-    return { owner: parts[0], repo: parts[1] };
+
+    const owner = parts[0];
+    const repo = parts[1];
+    let skillsPath: string | undefined;
+
+    if (parts[2] === "tree" || parts[2] === "blob") {
+      const pathSegments = parts.slice(4);
+      if (parts[2] === "blob" && pathSegments.length) {
+        const last = pathSegments[pathSegments.length - 1];
+        if (last.toLowerCase() === "skill.md" || last.includes(".")) {
+          pathSegments.pop();
+        }
+      }
+      if (pathSegments.length) {
+        skillsPath = resolveSkillsPath(pathSegments.join("/"));
+      }
+    }
+
+    return { owner, repo, skillsPath };
   } catch {
     return null;
   }

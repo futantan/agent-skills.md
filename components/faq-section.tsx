@@ -12,7 +12,7 @@ const faqItems = [
   {
     question: "Where are skills stored in a repo?",
     answer:
-      "By default, the site scans the skills/ folder. You can override the folder during submission, or even scan from repo root if needed.",
+      "By default, the site scans the skills/ folder. You can also submit a URL that points directly to a specific skills folder.",
   },
   {
     question: "What is required inside SKILL.md?",
@@ -22,7 +22,7 @@ const faqItems = [
   {
     question: "How can I submit a repo?",
     answer:
-      "Click Submit in the header and paste a GitHub repo URL. We’ll parse the skills folder and add any valid skills to the directory.",
+      "Click Submit in the header and paste a GitHub URL that points to a skills folder. We’ll parse it and add any valid skills to the directory.",
   },
 ];
 

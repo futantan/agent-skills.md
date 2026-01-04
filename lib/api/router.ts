@@ -60,13 +60,12 @@ const submitRepoHandler = os
   .input(
     z.object({
       url: z.string().min(1),
-      skillsPath: z.string().optional(),
     })
   )
   .handler(async ({ input, context }) => {
     const headers = (context as { headers?: Headers })?.headers;
     const token = headers?.get("x-github-token") ?? env.GITHUB_TOKEN ?? undefined;
-    return submitRepo(input.url, token, input.skillsPath);
+    return submitRepo(input.url, token);
   });
 
 const skillTree = os

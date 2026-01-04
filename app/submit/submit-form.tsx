@@ -23,7 +23,6 @@ type SubmitResult = {
 
 export function SubmitForm() {
   const [repoUrl, setRepoUrl] = useState("");
-  const [skillsPath, setSkillsPath] = useState("");
   const [status, setStatus] = useState<SubmitStatus>("idle");
   const [message, setMessage] = useState<string | null>(null);
   const [result, setResult] = useState<SubmitResult | null>(null);
@@ -34,7 +33,7 @@ export function SubmitForm() {
         ? `${result.repoId} already exists.`
         : `Parsed ${result.skillsAdded} skills from ${result.repoId}.`;
     }
-    return "Examples: https://github.com/vercel/ai or vercel/ai.";
+    return "Example: https://github.com/owner/repo/tree/main/skills (repo root defaults to skills/).";
   }, [result, status]);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -42,7 +41,7 @@ export function SubmitForm() {
 
     if (!repoUrl.trim()) {
       setStatus("error");
-      setMessage("Please enter a GitHub repository URL.");
+      setMessage("Please enter a GitHub skills folder URL.");
       return;
     }
 
@@ -53,7 +52,6 @@ export function SubmitForm() {
     try {
       const payload = (await client.repos.submit({
         url: repoUrl,
-        skillsPath: skillsPath.trim() ? skillsPath.trim() : undefined,
       })) as SubmitResult;
       setResult(payload);
       setStatus("success");
@@ -84,7 +82,7 @@ export function SubmitForm() {
               className="text-sm font-medium text-foreground"
               htmlFor="repo-url"
             >
-              GitHub repository URL
+              Skills folder URL
             </label>
             <div className="relative">
               <Github className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -94,32 +92,11 @@ export function SubmitForm() {
                 id="repo-url"
                 name="repo-url"
                 onChange={(event) => setRepoUrl(event.target.value)}
-                placeholder="https://github.com/owner/repo"
+                placeholder="https://github.com/owner/repo/tree/main/skills"
                 value={repoUrl}
               />
             </div>
             <p className="text-xs text-muted-foreground">{helperText}</p>
-          </div>
-
-          <div className="space-y-2">
-            <label
-              className="text-sm font-medium text-foreground"
-              htmlFor="skills-path"
-            >
-              Skills folder (optional)
-            </label>
-            <Input
-              className="h-11 bg-background/70"
-              disabled={status === "loading"}
-              id="skills-path"
-              name="skills-path"
-              onChange={(event) => setSkillsPath(event.target.value)}
-              placeholder="skills"
-              value={skillsPath}
-            />
-            <p className="text-xs text-muted-foreground">
-              Defaults to skills/. Use "/" to scan from repository root.
-            </p>
           </div>
 
           <Button

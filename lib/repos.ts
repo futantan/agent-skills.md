@@ -14,8 +14,7 @@ type GitHubRepoInfo = {
 
 export async function submitRepo(
   repoInput: string,
-  token?: string,
-  skillsPath?: string
+  token?: string
 ) {
   const parsed = parseGitHubRepo(repoInput);
   if (!parsed) {
@@ -53,7 +52,7 @@ export async function submitRepo(
     repoInfo = null;
   }
 
-  const normalizedSkillsPath = resolveSkillsPath(skillsPath);
+  const normalizedSkillsPath = resolveSkillsPath(parsed.skillsPath);
   const skills = await fetchSkillsFromRepo(repoInput, {
     token,
     skillsPath: normalizedSkillsPath,
