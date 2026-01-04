@@ -1,6 +1,7 @@
 import { db } from "@/db";
 import { reposTable, skillsTable } from "@/db/schema";
 import { fetchSkillsFromRepo, parseGitHubRepo } from "@/lib/skills-parser";
+import { resolveSkillsPath } from "@/lib/skill-path";
 import { and, eq } from "drizzle-orm";
 
 type GitHubRepoInfo = {
@@ -11,7 +12,11 @@ type GitHubRepoInfo = {
   owner?: { login?: string; html_url?: string; avatar_url?: string } | null;
 };
 
-export async function submitRepo(repoInput: string, token?: string) {
+export async function submitRepo(
+  repoInput: string,
+  token?: string,
+  skillsPath?: string
+) {
   const parsed = parseGitHubRepo(repoInput);
   if (!parsed) {
     throw new Error("Invalid GitHub repository URL.");
@@ -48,13 +53,18 @@ export async function submitRepo(repoInput: string, token?: string) {
     repoInfo = null;
   }
 
-  const skills = await fetchSkillsFromRepo(repoInput, { token });
+  const normalizedSkillsPath = resolveSkillsPath(skillsPath);
+  const skills = await fetchSkillsFromRepo(repoInput, {
+    token,
+    skillsPath: normalizedSkillsPath,
+  });
 
   await db.transaction(async (tx) => {
     const repoValues = {
       id: repoId,
       owner: parsed.owner,
       name: parsed.repo,
+      skillsPath: normalizedSkillsPath,
       url: repoInfo?.html_url ?? fallbackUrl,
       license: repoInfo?.license?.spdx_id ?? repoInfo?.license?.name ?? null,
       stars: repoInfo?.stargazers_count ?? 0,
@@ -66,6 +76,7 @@ export async function submitRepo(repoInput: string, token?: string) {
       updatedAt: new Date(),
     };
     const repoUpdate = {
+      skillsPath: repoValues.skillsPath,
       url: repoValues.url,
       license: repoValues.license,
       stars: repoValues.stars,

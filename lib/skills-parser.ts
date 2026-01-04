@@ -1,3 +1,4 @@
+import { resolveSkillsPath } from "@/lib/skill-path";
 import type { Skill } from "@/lib/skills";
 
 type ParsedRepo = {
@@ -13,6 +14,7 @@ type SkillFrontmatter = {
 
 type FetchOptions = {
   token?: string;
+  skillsPath?: string;
 };
 
 type GitHubContent = {
@@ -37,8 +39,10 @@ export async function fetchSkillsFromRepo(
     ? { Authorization: `Bearer ${options.token}` }
     : undefined;
 
+  const basePath = resolveSkillsPath(options.skillsPath);
+  const basePathSegment = basePath ? `/${basePath}` : "";
   const skillsDir = await getJson(
-    `${API_BASE}/repos/${repo.owner}/${repo.repo}/contents/skills`,
+    `${API_BASE}/repos/${repo.owner}/${repo.repo}/contents${basePathSegment}`,
     headers
   );
 
@@ -53,8 +57,9 @@ export async function fetchSkillsFromRepo(
   const skills: Skill[] = [];
 
   for (const dir of skillDirs) {
+    const skillRoot = basePath ? `${basePath}/${dir.name}` : dir.name;
     const skillFile = await getJson(
-      `${API_BASE}/repos/${repo.owner}/${repo.repo}/contents/skills/${dir.name}/SKILL.md`,
+      `${API_BASE}/repos/${repo.owner}/${repo.repo}/contents/${skillRoot}/SKILL.md`,
       headers
     ).catch(() => null);
 

@@ -22,6 +22,7 @@ export const reposTable = pgTable(
     ownerName: varchar({ length: 128 }),
     ownerUrl: varchar({ length: 512 }),
     ownerAvatarUrl: varchar({ length: 512 }),
+    skillsPath: varchar({ length: 255 }).notNull().default("skills"),
     lastParsedAt: timestamp({ withTimezone: true }),
     createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp({ withTimezone: true }).notNull().defaultNow(),

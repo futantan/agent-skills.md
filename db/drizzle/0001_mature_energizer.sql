@@ -1,0 +1,1 @@
+ALTER TABLE "repos" ADD COLUMN "skillsPath" varchar(255) DEFAULT 'skills' NOT NULL;

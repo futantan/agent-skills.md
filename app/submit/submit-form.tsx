@@ -23,6 +23,7 @@ type SubmitResult = {
 
 export function SubmitForm() {
   const [repoUrl, setRepoUrl] = useState("");
+  const [skillsPath, setSkillsPath] = useState("");
   const [status, setStatus] = useState<SubmitStatus>("idle");
   const [message, setMessage] = useState<string | null>(null);
   const [result, setResult] = useState<SubmitResult | null>(null);
@@ -52,6 +53,7 @@ export function SubmitForm() {
     try {
       const payload = (await client.repos.submit({
         url: repoUrl,
+        skillsPath: skillsPath.trim() ? skillsPath.trim() : undefined,
       })) as SubmitResult;
       setResult(payload);
       setStatus("success");
@@ -97,6 +99,27 @@ export function SubmitForm() {
               />
             </div>
             <p className="text-xs text-muted-foreground">{helperText}</p>
+          </div>
+
+          <div className="space-y-2">
+            <label
+              className="text-sm font-medium text-foreground"
+              htmlFor="skills-path"
+            >
+              Skills folder (optional)
+            </label>
+            <Input
+              className="h-11 bg-background/70"
+              disabled={status === "loading"}
+              id="skills-path"
+              name="skills-path"
+              onChange={(event) => setSkillsPath(event.target.value)}
+              placeholder="skills"
+              value={skillsPath}
+            />
+            <p className="text-xs text-muted-foreground">
+              Defaults to skills/. Use "/" to scan from repository root.
+            </p>
           </div>
 
           <Button

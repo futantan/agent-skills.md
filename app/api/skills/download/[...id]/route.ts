@@ -1,9 +1,12 @@
+import { db } from "@/db";
+import { reposTable } from "@/db/schema";
 import { env } from "@/env";
 import { fetchBlobContent, fetchRepoTree } from "@/lib/github-files";
-import { parseSkillId } from "@/lib/skill-path";
+import { joinSkillsPath, parseSkillId, resolveSkillsPath } from "@/lib/skill-path";
 import archiver from "archiver";
 import { NextResponse } from "next/server";
 import { PassThrough, Readable } from "node:stream";
+import { eq } from "drizzle-orm";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -20,7 +23,15 @@ export async function GET(
   }
 
   const { owner, repo, skillDir } = skillParams;
-  const prefix = `skills/${skillDir}/`;
+  const repoId = `${owner}/${repo}`;
+  const [repoRow] = await db
+    .select({ skillsPath: reposTable.skillsPath })
+    .from(reposTable)
+    .where(eq(reposTable.id, repoId))
+    .limit(1);
+  const basePath = resolveSkillsPath(repoRow?.skillsPath);
+  const prefixRoot = joinSkillsPath(basePath, skillDir);
+  const prefix = prefixRoot ? `${prefixRoot}/` : "";
 
   try {
     const entries = await fetchRepoTree(owner, repo, env.GITHUB_TOKEN);

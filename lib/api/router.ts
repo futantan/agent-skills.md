@@ -1,9 +1,9 @@
 import { db } from "@/db";
-import { skillsTable } from "@/db/schema";
+import { reposTable, skillsTable } from "@/db/schema";
 import { env } from "@/env";
 import { buildFileTree, fetchFileContent, fetchRepoTree } from "@/lib/github-files";
 import { submitRepo } from "@/lib/repos";
-import { parseSkillId } from "@/lib/skill-path";
+import { joinSkillsPath, parseSkillId, resolveSkillsPath } from "@/lib/skill-path";
 import { os } from "@orpc/server";
 import { desc, eq, ilike, or, sql } from "drizzle-orm";
 import * as z from "zod";
@@ -60,12 +60,13 @@ const submitRepoHandler = os
   .input(
     z.object({
       url: z.string().min(1),
+      skillsPath: z.string().optional(),
     })
   )
   .handler(async ({ input, context }) => {
     const headers = (context as { headers?: Headers })?.headers;
     const token = headers?.get("x-github-token") ?? env.GITHUB_TOKEN ?? undefined;
-    return submitRepo(input.url, token);
+    return submitRepo(input.url, token, input.skillsPath);
   });
 
 const skillTree = os
@@ -80,7 +81,14 @@ const skillTree = os
     const token = headers?.get("x-github-token") ?? env.GITHUB_TOKEN ?? undefined;
 
     const { owner, repo, skillDir } = params;
-    const prefix = `skills/${skillDir}`;
+    const repoId = `${owner}/${repo}`;
+    const [repoRow] = await db
+      .select({ skillsPath: reposTable.skillsPath })
+      .from(reposTable)
+      .where(eq(reposTable.id, repoId))
+      .limit(1);
+    const basePath = resolveSkillsPath(repoRow?.skillsPath);
+    const prefix = joinSkillsPath(basePath, skillDir);
     try {
       const entries = await fetchRepoTree(owner, repo, token);
       const root = buildFileTree(entries, prefix);
@@ -110,7 +118,15 @@ const skillFile = os
 
     const decodedPath = decodeURIComponent(input.path);
     const { owner, repo, skillDir } = params;
-    const prefix = `skills/${skillDir}/`;
+    const repoId = `${owner}/${repo}`;
+    const [repoRow] = await db
+      .select({ skillsPath: reposTable.skillsPath })
+      .from(reposTable)
+      .where(eq(reposTable.id, repoId))
+      .limit(1);
+    const basePath = resolveSkillsPath(repoRow?.skillsPath);
+    const prefixRoot = joinSkillsPath(basePath, skillDir);
+    const prefix = prefixRoot ? `${prefixRoot}/` : "";
     if (!decodedPath.startsWith(prefix)) {
       throw new Error("Path must be inside the skill folder.");
     }
