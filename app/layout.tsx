@@ -2,6 +2,7 @@ import { NuqsAdapter } from "nuqs/adapters/next/app";
 
 import { Providers } from "@/components/providers";
 import "@/lib/api/orpc.server";
+import { siteConfig } from "@/lib/site-config";
 import type { Metadata } from "next";
 import { Figtree, Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
@@ -19,9 +20,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Agent Skills - AI-Powered Development Capabilities",
-  description:
-    "Production-ready AI capabilities for your development workflow. Enhance your projects with intelligent automation and analysis.",
+  title: siteConfig.site.title,
+  description: siteConfig.site.description,
 };
 
 export default function RootLayout({

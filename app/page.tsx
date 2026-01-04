@@ -3,6 +3,7 @@ import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { SkillsExplorer } from "@/components/skills-explorer";
 import { client } from "@/lib/api/orpc";
+import { siteConfig } from "@/lib/site-config";
 
 export default async function Home() {
   const skills = await client.skills.list();
@@ -42,8 +43,7 @@ export default async function Home() {
               </h1>
 
               <p className="text-lg leading-8 text-muted-foreground animate-fade-in-up [animation-delay:200ms]">
-                Agent-Skills.md is a agent skills marketplace, to find the right
-                agent skills for you.
+                {siteConfig.site.description}
               </p>
             </div>
           </div>
