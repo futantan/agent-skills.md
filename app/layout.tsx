@@ -22,6 +22,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://agent-skills.md/"),
   title: siteConfig.site.title,
   description: siteConfig.site.description,
 };
