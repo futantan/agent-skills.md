@@ -4,15 +4,19 @@ import { client } from "@/lib/api/orpc";
 import { notFound } from "next/navigation";
 
 type SkillDetailPageProps = {
-  params: Promise<{ id: string }>;
+  params: Promise<{ id: string | string[] }>;
 };
 
 export default async function SkillDetailPage({
   params,
 }: SkillDetailPageProps) {
   const { id } = await params;
-  const decodedId = decodeURIComponent(id);
-  const skill = await client.skills.find({ id: decodedId });
+  const rawId = Array.isArray(id) ? id.join("/") : id;
+  const decodedId = decodeURIComponent(rawId);
+  // decodedId is /skills/anthropics/skills/algorithmic-art
+  // but the id in db is anthropics/skills/algorithmic-art
+  const normalizedId = decodedId.replace(/^\/?skills\//, "");
+  const skill = await client.skills.find({ id: normalizedId });
 
   if (!skill) {
     notFound();
