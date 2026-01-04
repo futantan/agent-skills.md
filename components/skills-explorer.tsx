@@ -7,7 +7,7 @@ import {
   InputGroupButton,
   InputGroupInput,
 } from "@/components/ui/input-group";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { orpc } from "@/lib/api/orpc";
 import { Skill } from "@/lib/types";
 import { useQuery } from "@tanstack/react-query";
@@ -97,7 +97,7 @@ export function SkillsExplorer({ initialSkills }: SkillsExplorerProps) {
           onValueChange={setActiveCategory}
           className="w-full"
         >
-          <div className="mb-12 flex flex-col gap-4">
+          {/* <div className="mb-12 flex flex-col gap-4">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <TabsList className="no-scrollbar flex w-full flex-nowrap gap-1 overflow-x-auto rounded-md bg-transparent p-0 sm:flex-wrap sm:overflow-visible sm:w-auto">
                 {categories.map((category, index) => (
@@ -112,7 +112,7 @@ export function SkillsExplorer({ initialSkills }: SkillsExplorerProps) {
                 ))}
               </TabsList>
             </div>
-          </div>
+          </div> */}
 
           {categories.map((category) => (
             <TabsContent key={category} value={category} className="mt-0">
