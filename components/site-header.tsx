@@ -1,3 +1,4 @@
+import { SiteLogo } from "@/components/site-logo";
 import { buttonVariants } from "@/components/ui/button";
 import { Github } from "lucide-react";
 import Link from "next/link";
@@ -6,12 +7,7 @@ export function SiteHeader() {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/20 backdrop-blur-md">
       <div className="container mx-auto flex h-14 items-center justify-between px-6">
-        <Link
-          className="text-lg font-bold tracking-tight transition-opacity hover:opacity-80"
-          href="/"
-        >
-          Logo
-        </Link>
+        <SiteLogo />
 
         <nav className="flex items-center gap-2">
           <Link
