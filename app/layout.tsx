@@ -39,8 +39,8 @@ export default function RootLayout({
       >
         <Script
           defer
-          data-domain={env.NEXT_PUBLIC_PLAUSIBLE_DOMAIN}
-          src={env.NEXT_PUBLIC_PLAUSIBLE_DATA_DOMAIN}
+          data-domain={env.NEXT_PUBLIC_PLAUSIBLE_DATA_DOMAIN}
+          src={env.NEXT_PUBLIC_PLAUSIBLE_DOMAIN}
         />
         <NuqsAdapter>
           <Providers>{children}</Providers>
