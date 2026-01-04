@@ -62,7 +62,7 @@ export function SkillsExplorer({ initialSkills }: SkillsExplorerProps) {
   return (
     <>
       <div className="mx-auto -mt-6 flex w-full max-w-4xl px-6 relative">
-        <InputGroup className="h-12 w-full bg-white">
+        <InputGroup className="h-12 w-full bg-white ring-1 ring-primary">
           <InputGroupAddon>
             <Search className="h-4 w-4" />
           </InputGroupAddon>
