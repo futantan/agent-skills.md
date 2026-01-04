@@ -77,6 +77,16 @@ export function SkillFilesExplorer({
     };
   }, [skillId]);
 
+  useEffect(() => {
+    if (!root || selectedPath) {
+      return;
+    }
+    const skillFile = findFileByName(root, "SKILL.md");
+    if (skillFile) {
+      void handleSelectFile(skillFile);
+    }
+  }, [root, selectedPath]);
+
   const handleSelectFile = async (node: FileNode) => {
     if (node.type !== "file") {
       return;
@@ -120,7 +130,7 @@ export function SkillFilesExplorer({
         </a>
       </div>
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_1.2fr]">
+      <div className="mt-6 grid gap-6 lg:grid-cols-[0.6fr_2fr]">
         <div className="rounded-2xl border border-border/50 bg-background/40 p-4">
           {treeLoading ? (
             <p className="text-sm text-muted-foreground">Loading file tree…</p>
@@ -218,7 +228,7 @@ function FilePreviewPanel({ preview }: { preview: FilePreview }) {
         <div className="mb-3 text-xs uppercase tracking-[0.2em] text-muted-foreground">
           {preview.path}
         </div>
-        <pre className="max-h-[520px] overflow-auto rounded-xl border border-border/40 bg-muted/20 p-4 text-xs leading-relaxed text-foreground">
+        <pre className="max-h-[520px] overflow-auto whitespace-pre-wrap break-words rounded-xl border border-border/40 bg-muted/20 p-4 text-xs leading-relaxed text-foreground">
           {preview.content}
         </pre>
       </div>
@@ -250,4 +260,20 @@ function formatBytes(value: number) {
     return `${(value / 1024).toFixed(1)} KB`;
   }
   return `${(value / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function findFileByName(node: FileNode, name: string): FileNode | null {
+  if (node.type === "file" && node.name === name) {
+    return node;
+  }
+  if (!node.children?.length) {
+    return null;
+  }
+  for (const child of node.children) {
+    const match = findFileByName(child, name);
+    if (match) {
+      return match;
+    }
+  }
+  return null;
 }
