@@ -1,6 +1,7 @@
 "use client";
 
 import { client } from "@/lib/api/orpc";
+import { FileText, Folder } from "lucide-react";
 import { useEffect, useState } from "react";
 
 type FileNode = {
@@ -185,7 +186,7 @@ function TreeNode({ node, depth, onSelect, selectedPath }: TreeNodeProps) {
       <details className={`group ${padding}`} open={depth === 0}>
         <summary className="cursor-pointer list-none text-sm font-semibold text-foreground">
           <span className="inline-flex items-center gap-2">
-            <span className="h-2 w-2 rounded-full bg-primary/60" />
+            <Folder className="h-4 w-4 text-primary/70" />
             {node.name}
           </span>
         </summary>
@@ -215,7 +216,7 @@ function TreeNode({ node, depth, onSelect, selectedPath }: TreeNodeProps) {
       onClick={() => onSelect(node)}
       type="button"
     >
-      <span className="h-2 w-2 rounded-full bg-muted-foreground/60" />
+      <FileText className="h-4 w-4 text-muted-foreground/70" />
       <span className="truncate">{node.name}</span>
     </button>
   );
