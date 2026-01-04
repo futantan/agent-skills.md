@@ -48,23 +48,15 @@ export default async function Home() {
                   {skills.length} Skills Available
                 </span>
               </div>
+
               <h1 className="mb-6 text-5xl font-bold tracking-tight text-foreground sm:text-6xl lg:text-7xl animate-fade-in-up [animation-delay:100ms]">
                 Agent Skills
               </h1>
+
               <p className="text-lg leading-8 text-muted-foreground animate-fade-in-up [animation-delay:200ms]">
-                Production-ready AI capabilities for your development workflow.
-                Enhance your projects with intelligent automation and analysis.
+                Production-ready AI capabilities for your workflow. Enhance your
+                projects with Agent Skills
               </p>
-              <div className="mt-10 flex items-center justify-center gap-4 animate-fade-in-up [animation-delay:300ms]">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <div className="h-1.5 w-1.5 rounded-full bg-green-500"></div>
-                  <span>All systems operational</span>
-                </div>
-                <div className="h-4 w-px bg-border"></div>
-                <div className="text-sm text-muted-foreground">
-                  Last updated: Just now
-                </div>
-              </div>
             </div>
           </div>
         </div>
