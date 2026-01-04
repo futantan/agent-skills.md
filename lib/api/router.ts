@@ -5,14 +5,14 @@ import { buildFileTree, fetchFileContent, fetchRepoTree } from "@/lib/github-fil
 import { submitRepo } from "@/lib/repos";
 import { joinSkillsPath, parseSkillId, resolveSkillsPath } from "@/lib/skill-path";
 import { os } from "@orpc/server";
-import { desc, eq, ilike, or, sql } from "drizzle-orm";
+import { asc, desc, eq, ilike, or, sql } from "drizzle-orm";
 import * as z from "zod";
 
 const listSkills = os.handler(async () => {
   return db
     .select()
     .from(skillsTable)
-    .orderBy(desc(skillsTable.updatedAt))
+    .orderBy(asc(skillsTable.updatedAt))
 });
 
 const searchSkills = os
