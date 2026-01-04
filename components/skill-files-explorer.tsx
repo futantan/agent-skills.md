@@ -105,9 +105,7 @@ export function SkillFilesExplorer({
       setPreview(data);
     } catch (error) {
       const message =
-        error instanceof Error
-          ? error.message
-          : "Unable to load file preview.";
+        error instanceof Error ? error.message : "Unable to load file preview.";
       setPreviewError(message);
     } finally {
       setPreviewLoading(false);
@@ -124,10 +122,10 @@ export function SkillFilesExplorer({
           </p>
         </div>
         <a
-          className="inline-flex items-center rounded-full border border-border/60 bg-muted/30 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-foreground transition hover:border-border"
+          className="inline-flex items-center rounded-full bg-primary px-5 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-primary-foreground shadow-lg shadow-primary/30 transition hover:bg-primary/90"
           href={`/api/skills/download/${downloadId}`}
         >
-          Download Folder
+          Download Skill
         </a>
       </div>
 
@@ -239,8 +237,8 @@ function FilePreviewPanel({ preview }: { preview: FilePreview }) {
   if (preview.kind === "too_large") {
     return (
       <p className="text-sm text-muted-foreground">
-        This file is too large to preview ({formatBytes(preview.size)}). Download
-        the folder to view it locally.
+        This file is too large to preview ({formatBytes(preview.size)}).
+        Download the folder to view it locally.
       </p>
     );
   }
