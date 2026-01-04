@@ -113,7 +113,7 @@ export function SkillFilesExplorer({
   };
 
   return (
-    <section className="mt-10 rounded-2xl border border-border/40 bg-card/40 p-8">
+    <section className="mt-10 rounded-2xl border border-border/40 bg-card/40 p-5 sm:p-8">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h2 className="text-lg font-semibold text-foreground">Skill Files</h2>
@@ -129,8 +129,8 @@ export function SkillFilesExplorer({
         </a>
       </div>
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-[0.6fr_2fr]">
-        <div className="rounded-2xl border border-border/50 bg-background/40 p-4">
+      <div className="mt-5 grid gap-5 sm:mt-6 sm:gap-6 lg:grid-cols-[0.6fr_2fr]">
+        <div className="rounded-2xl border border-border/50 bg-background/40 p-3 sm:p-4">
           {treeLoading ? (
             <p className="text-sm text-muted-foreground">Loading file tree…</p>
           ) : treeError ? (
@@ -149,7 +149,7 @@ export function SkillFilesExplorer({
           )}
         </div>
 
-        <div className="rounded-2xl border border-border/50 bg-background/40 p-4">
+        <div className="rounded-2xl border border-border/50 bg-background/40 p-3 sm:p-4">
           {previewLoading ? (
             <p className="text-sm text-muted-foreground">
               Loading file preview…
