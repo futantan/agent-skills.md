@@ -1,10 +1,12 @@
 import { router } from '@/lib/api/router'
 import { onError } from '@orpc/server'
 import { RPCHandler } from '@orpc/server/fetch'
+import { BatchHandlerPlugin } from '@orpc/server/plugins'
 
 export const runtime = 'nodejs'
 
 const rpcHandler = new RPCHandler(router, {
+  plugins: [new BatchHandlerPlugin()],
   interceptors: [
     onError((error) => {
       console.error(error)
