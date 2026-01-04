@@ -45,7 +45,7 @@ export default async function Home() {
                   <span className="relative inline-flex h-2 w-2 rounded-full bg-primary"></span>
                 </span>
                 <span className="text-muted-foreground">
-                  12 Skills Available
+                  {skills.length} Skills Available
                 </span>
               </div>
               <h1 className="mb-6 text-5xl font-bold tracking-tight text-foreground sm:text-6xl lg:text-7xl animate-fade-in-up [animation-delay:100ms]">
