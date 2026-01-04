@@ -53,33 +53,6 @@ export default async function SkillDetailPage({
         </div>
 
         <div className="mt-10 grid gap-6 lg:grid-cols-[1.4fr_1fr]">
-          <section className="rounded-2xl border border-border/40 bg-card/40 p-8">
-            <h2 className="text-lg font-semibold text-foreground">
-              Skill Details
-            </h2>
-            <p className="mt-3 text-sm leading-6 text-muted-foreground">
-              {skill.description}
-            </p>
-
-            {skill.tags.length ? (
-              <div className="mt-6">
-                <p className="text-xs font-semibold uppercase tracking-[0.25em] text-muted-foreground">
-                  Tags
-                </p>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {skill.tags.map((tag) => (
-                    <span
-                      key={tag}
-                      className="inline-flex items-center rounded-md border border-border/50 bg-muted/30 px-2 py-1 text-xs font-medium text-muted-foreground"
-                    >
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            ) : null}
-          </section>
-
           <aside className="rounded-2xl border border-border/40 bg-card/40 p-8">
             <h2 className="text-lg font-semibold text-foreground">
               Author Information
