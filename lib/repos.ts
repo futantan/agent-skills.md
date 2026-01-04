@@ -58,6 +58,17 @@ export async function submitRepo(
     token,
     skillsPath: normalizedSkillsPath,
   });
+  const uniqueSkills = new Map<string, (typeof skills)[number]>();
+  for (const skill of skills) {
+    if (uniqueSkills.has(skill.id)) {
+      console.warn("Duplicate skill id detected, skipping.", {
+        id: skill.id,
+        repoId,
+      });
+      continue;
+    }
+    uniqueSkills.set(skill.id, skill);
+  }
 
   await db.transaction(async (tx) => {
     const repoValues = {
@@ -98,9 +109,9 @@ export async function submitRepo(
 
     await tx.delete(skillsTable).where(eq(skillsTable.repoId, repoId));
 
-    if (skills.length) {
+    if (uniqueSkills.size) {
       await tx.insert(skillsTable).values(
-        skills.map((skill) => ({
+        Array.from(uniqueSkills.values()).map((skill) => ({
           id: skill.id,
           repoId,
           name: skill.name,
