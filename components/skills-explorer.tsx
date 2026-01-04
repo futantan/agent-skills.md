@@ -116,7 +116,7 @@ export function SkillsExplorer({ initialSkills }: SkillsExplorerProps) {
 
           {categories.map((category) => (
             <TabsContent key={category} value={category} className="mt-0">
-              <div className="grid auto-rows-fr gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid auto-rows-[280px] gap-6 sm:grid-cols-2 lg:grid-cols-3">
                 {skills
                   .filter(
                     (skill) => category === "All" || skill.category === category
@@ -133,7 +133,7 @@ export function SkillsExplorer({ initialSkills }: SkillsExplorerProps) {
                           <h3 className="mb-2 text-xl font-semibold text-foreground transition-colors group-hover:text-primary">
                             {skill.name}
                           </h3>
-                          <p className="text-sm text-muted-foreground">
+                          <p className="text-sm text-muted-foreground line-clamp-6">
                             {skill.description}
                           </p>
                         </div>
