@@ -1,5 +1,6 @@
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
+import { SkillFilesExplorer } from "@/components/skill-files-explorer";
 import { client } from "@/lib/api/orpc";
 import { notFound } from "next/navigation";
 
@@ -83,33 +84,33 @@ export default async function SkillDetailPage({
             <h2 className="text-lg font-semibold text-foreground">
               Author Information
             </h2>
-            {skill.author ? (
+            {skill.authorName ? (
               <div className="mt-5 flex items-start gap-4">
-                {skill.author.avatarUrl ? (
+                {skill.authorAvatarUrl ? (
                   <img
-                    alt={skill.author.name}
+                    alt={skill.authorName}
                     className="h-14 w-14 rounded-full border border-border/60 object-cover"
-                    src={skill.author.avatarUrl}
+                    src={skill.authorAvatarUrl}
                   />
                 ) : null}
                 <div>
                   <p className="text-base font-semibold text-foreground">
-                    {skill.author.url ? (
+                    {skill.authorUrl ? (
                       <a
                         className="transition-colors hover:text-primary"
-                        href={skill.author.url}
+                        href={skill.authorUrl}
                         rel="noopener noreferrer"
                         target="_blank"
                       >
-                        {skill.author.name}
+                        {skill.authorName}
                       </a>
                     ) : (
-                      skill.author.name
+                      skill.authorName
                     )}
                   </p>
-                  {skill.author.url ? (
+                  {skill.authorUrl ? (
                     <p className="mt-2 text-xs text-muted-foreground">
-                      {skill.author.url}
+                      {skill.authorUrl}
                     </p>
                   ) : null}
                 </div>
@@ -128,6 +129,8 @@ export default async function SkillDetailPage({
             </div>
           </aside>
         </div>
+
+        <SkillFilesExplorer skillId={skill.id} skillName={skill.name} />
       </main>
 
       <SiteFooter />

@@ -203,7 +203,13 @@ function buildAuthor(metadataAuthor: string | undefined, owner: string) {
 }
 
 async function getJson(url: string, headers?: Record<string, string>) {
-  const response = await fetch(url, { headers });
+  const response = await fetch(url, {
+    headers: {
+      Accept: "application/vnd.github+json",
+      "User-Agent": "agent-skills",
+      ...headers,
+    },
+  });
   if (!response.ok) {
     throw new Error(`Failed to fetch ${url}`);
   }
