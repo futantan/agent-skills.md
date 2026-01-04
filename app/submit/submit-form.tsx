@@ -1,19 +1,17 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { client } from "@/lib/api/orpc";
 import { AlertTriangle, CheckCircle2, Github, Loader2 } from "lucide-react";
+import { useMemo, useState } from "react";
 
 type SubmitStatus = "idle" | "loading" | "success" | "error";
 
@@ -71,12 +69,9 @@ export function SubmitForm() {
       <CardHeader className="gap-2 border-b border-border/30">
         <div className="flex items-center justify-between gap-3">
           <CardTitle className="text-lg">Repository intake</CardTitle>
-          <Badge variant="outline" className="bg-background/70">
-            Skills parser
-          </Badge>
         </div>
         <CardDescription>
-          We will validate the repo, store it, and parse any SKILL.md files.
+          We will check the link and add the skills for you.
         </CardDescription>
       </CardHeader>
 
@@ -102,11 +97,6 @@ export function SubmitForm() {
               />
             </div>
             <p className="text-xs text-muted-foreground">{helperText}</p>
-          </div>
-
-          <div className="rounded-xl border border-border/40 bg-muted/30 p-3 text-xs text-muted-foreground">
-            We will pull metadata from GitHub and parse each skill definition
-            under `/skills`.
           </div>
 
           <Button
@@ -137,7 +127,9 @@ export function SubmitForm() {
             <CheckCircle2 className="mt-0.5 h-4 w-4" />
             <div>
               <p className="font-medium">
-                {result.alreadyExists ? "Repo already exists." : "Repo captured."}
+                {result.alreadyExists
+                  ? "Repo already exists."
+                  : "Repo captured."}
               </p>
               <p className="text-xs text-emerald-900/80 dark:text-emerald-100/80">
                 {result.alreadyExists
@@ -148,11 +140,6 @@ export function SubmitForm() {
           </div>
         ) : null}
       </CardContent>
-
-      <CardFooter className="justify-between text-xs text-muted-foreground">
-        <span>We never store your token.</span>
-        <span>Need help? Use owner/repo format.</span>
-      </CardFooter>
     </Card>
   );
 }

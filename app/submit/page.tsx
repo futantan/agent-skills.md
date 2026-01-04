@@ -17,67 +17,19 @@ export default function SubmitPage() {
           <div className="absolute -right-24 top-10 h-64 w-64 rounded-full bg-primary/10 blur-3xl" />
         </div>
 
-        <div className="relative mx-auto w-full max-w-6xl px-6 py-16 sm:py-20">
-          <div className="grid gap-12 lg:grid-cols-[1.05fr_0.95fr] lg:items-start">
-            <section className="space-y-6">
+        <div className="relative mx-auto w-full max-w-3xl px-6 py-16 sm:py-20">
+          <div className="space-y-10">
+            <section className="space-y-6 text-center">
               <Badge variant="outline" className="bg-background/70">
                 Submit repository
               </Badge>
               <h1 className="text-4xl font-semibold tracking-tight text-foreground sm:text-5xl">
-                Add your GitHub skills to the catalog.
+                Add skills to the website.
               </h1>
               <p className="text-lg leading-8 text-muted-foreground">
-                Point us at a repo with a `/skills` directory and we will ingest
-                it, parse skill metadata, and publish everything into the
-                database for discovery.
+                Paste a GitHub repo link. We will add its skills to the site
+                automatically.
               </p>
-
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="rounded-2xl border border-border/40 bg-card/70 p-5 shadow-sm">
-                  <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">
-                    Step 1
-                  </p>
-                  <h2 className="mt-3 text-base font-semibold text-foreground">
-                    Submit the repo URL
-                  </h2>
-                  <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                    Share a GitHub repo URL or the owner/name shortcut.
-                  </p>
-                </div>
-                <div className="rounded-2xl border border-border/40 bg-card/70 p-5 shadow-sm">
-                  <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">
-                    Step 2
-                  </p>
-                  <h2 className="mt-3 text-base font-semibold text-foreground">
-                    Skills get parsed
-                  </h2>
-                  <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                    We scan `skills/*/SKILL.md` and add them to the catalog.
-                  </p>
-                </div>
-                <div className="rounded-2xl border border-border/40 bg-card/70 p-5 shadow-sm">
-                  <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">
-                    Step 3
-                  </p>
-                  <h2 className="mt-3 text-base font-semibold text-foreground">
-                    Review the listing
-                  </h2>
-                  <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                    New skills appear in the Explore page automatically.
-                  </p>
-                </div>
-                <div className="rounded-2xl border border-border/40 bg-card/70 p-5 shadow-sm">
-                  <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">
-                    Step 4
-                  </p>
-                  <h2 className="mt-3 text-base font-semibold text-foreground">
-                    Iterate anytime
-                  </h2>
-                  <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                    Re-submit to refresh metadata and keep the catalog current.
-                  </p>
-                </div>
-              </div>
             </section>
 
             <SubmitForm />
