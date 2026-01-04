@@ -4,13 +4,14 @@ import { Card } from "@/components/ui/card";
 import {
   InputGroup,
   InputGroupAddon,
+  InputGroupButton,
   InputGroupInput,
 } from "@/components/ui/input-group";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { orpc } from "@/lib/api/orpc";
 import { Skill } from "@/lib/types";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowRight, Search } from "lucide-react";
+import { ArrowRight, Loader2, Search, X } from "lucide-react";
 import Link from "next/link";
 import { debounce, parseAsString, useQueryState } from "nuqs";
 import { useEffect, useMemo, useState } from "react";
@@ -71,12 +72,23 @@ export function SkillsExplorer({ initialSkills }: SkillsExplorerProps) {
             placeholder="Search skills..."
             value={urlQuery}
           />
+          {(searchQuery.isFetching || urlQuery.trim()) && (
+            <InputGroupAddon align="inline-end">
+              {searchQuery.isFetching ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <InputGroupButton
+                  aria-label="Clear search"
+                  onClick={() => void setUrlQuery("")}
+                  size="icon-sm"
+                  variant="ghost"
+                >
+                  <X className="h-4 w-4" />
+                </InputGroupButton>
+              )}
+            </InputGroupAddon>
+          )}
         </InputGroup>
-      </div>
-      <div className="mx-auto mt-3 flex w-full max-w-4xl px-6">
-        <span className="text-xs text-muted-foreground">
-          {searchQuery.isFetching ? "Searching..." : `${skills.length} skills`}
-        </span>
       </div>
 
       <main className="mx-auto container px-6 pt-10 pb-16">
