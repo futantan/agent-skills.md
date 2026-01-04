@@ -1,25 +1,28 @@
-import { ChevronRight } from "lucide-react";
-
 const faqItems = [
   {
     question: "What are Agent Skills?",
     answer:
-      "Agent Skills are reusable, production-ready capability packs for AI agents. Each skill lives in its own folder and is described by a SKILL.md file that includes metadata and instructions.",
+      "Agent Skills are reusable, production-ready capability packs for AI agents. Each skill lives in its own folder and is described by a SKILL.md file with metadata and instructions.",
   },
   {
-    question: "How do I submit a repo to the site?",
+    question: "What does this agent-skills.md site do?",
     answer:
-      "Use the Submit page and paste a public GitHub repository URL. The site parses skills/ folders and indexes the skills it finds.",
+      "Agent Skills is a curated directory that indexes skill repositories and lets you browse, preview, and download skills in a consistent format.",
   },
   {
-    question: "How should I organize supporting files?",
+    question: "Where are skills stored in a repo?",
     answer:
-      "Place extra files in the same skill folder and reference them from SKILL.md. Keep the main file concise and move large details into referenced files.",
+      "By default, the site scans the skills/ folder. You can override the folder during submission, or even scan from repo root if needed.",
   },
   {
-    question: "Can I preview or download a skill folder?",
+    question: "What is required inside SKILL.md?",
     answer:
-      "Yes. Open any skill detail page to browse the folder tree, preview SKILL.md, and download the full skill folder.",
+      "SKILL.md must include YAML frontmatter with at least name and description. The body contains the actual guidance and steps for the agent.",
+  },
+  {
+    question: "How can I submit a repo?",
+    answer:
+      "Click Submit in the header and paste a GitHub repo URL. We’ll parse the skills folder and add any valid skills to the directory.",
   },
 ];
 
@@ -40,28 +43,31 @@ export function FaqSection() {
   return (
     <section className="mx-auto mt-16 w-full max-w-6xl px-6 pb-8">
       <div className="rounded-3xl border border-border/40 bg-card/40 p-10">
-        <h2 className="mt-3 text-3xl font-semibold text-foreground text-center">
-          FAQ
-        </h2>
+        <div className="mx-auto max-w-3xl text-center">
+          <h2 className="mt-2 text-3xl font-semibold text-foreground">FAQ</h2>
+          <p className="mt-3 text-sm text-muted-foreground">
+            Frequently asked questions about Agent Skills.
+          </p>
+        </div>
 
-        <div className="mt-10 space-y-4">
-          {faqItems.map((item) => (
-            <details
+        <div className="mt-12 grid gap-8 md:grid-cols-2">
+          {faqItems.map((item, index) => (
+            <div
               key={item.question}
-              className="group rounded-2xl border border-border/40 bg-background/40 px-6 py-4"
+              className="flex gap-4 rounded-2xl border border-border/30 bg-background/40 p-6"
             >
-              <summary className="cursor-pointer list-none text-sm font-semibold text-foreground">
-                <span className="flex items-center justify-between gap-4">
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-primary/40 bg-primary/10 text-xs font-semibold text-primary">
+                {String(index + 1).padStart(2, "0")}
+              </span>
+              <div>
+                <h3 className="text-sm font-semibold text-foreground">
                   {item.question}
-                  <span className="transition group-open:rotate-90">
-                    <ChevronRight size="16" />
-                  </span>
-                </span>
-              </summary>
-              <div className="mt-3 text-sm leading-6 text-muted-foreground">
-                {item.answer}
+                </h3>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                  {item.answer}
+                </p>
               </div>
-            </details>
+            </div>
           ))}
         </div>
       </div>
