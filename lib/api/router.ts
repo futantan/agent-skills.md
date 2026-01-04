@@ -11,7 +11,6 @@ const listSkills = os.handler(async () => {
     .select()
     .from(skillsTable)
     .orderBy(desc(skillsTable.updatedAt))
-    .then(v => v.map(mapSkillRow));
 });
 
 const searchSkills = os
@@ -27,7 +26,6 @@ const searchSkills = os
         .select()
         .from(skillsTable)
         .orderBy(desc(skillsTable.updatedAt))
-        .then(v => v.map(mapSkillRow));
     }
 
     const escaped = query.replace(/[%_]/g, "\\$&");
@@ -43,7 +41,6 @@ const searchSkills = os
         )
       )
       .orderBy(desc(skillsTable.updatedAt))
-      .then(v => v.map(mapSkillRow))
   });
 
 const findSkill = os
@@ -54,7 +51,7 @@ const findSkill = os
       .from(skillsTable)
       .where(eq(skillsTable.id, input.id))
       .limit(1);
-    return row ? mapSkillRow(row) : null;
+    return row
   });
 
 const submitRepoHandler = os
@@ -80,21 +77,4 @@ export const router = {
   },
 };
 
-function mapSkillRow(row: typeof skillsTable.$inferSelect) {
-  const author = row.authorName
-    ? {
-      name: row.authorName,
-      url: row.authorUrl ?? undefined,
-      avatarUrl: row.authorAvatarUrl ?? undefined,
-    }
-    : undefined;
 
-  return {
-    id: row.id,
-    name: row.name,
-    description: row.description,
-    category: row.category ?? "Uncategorized",
-    tags: row.tags ?? [],
-    author,
-  };
-}

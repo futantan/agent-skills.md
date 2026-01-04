@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
 import { Card } from "@/components/ui/card";
 import {
   InputGroup,
@@ -8,50 +7,43 @@ import {
   InputGroupInput,
 } from "@/components/ui/input-group";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { client } from "@/lib/api/orpc";
-import type { Skill } from "@/lib/skills";
+import { orpc } from "@/lib/api/orpc";
+import { Skill } from "@/lib/types";
+import { useQuery } from "@tanstack/react-query";
 import { ArrowRight, Search } from "lucide-react";
 import Link from "next/link";
+import { debounce, parseAsString, useQueryState } from "nuqs";
+import { useEffect, useMemo, useState } from "react";
 
 type SkillsExplorerProps = {
   initialSkills: Skill[];
 };
 
 export function SkillsExplorer({ initialSkills }: SkillsExplorerProps) {
-  const [query, setQuery] = useState("");
-  const [skills, setSkills] = useState<Skill[]>(initialSkills);
+  const [urlQuery, setUrlQuery] = useQueryState("q", {
+    ...parseAsString.withDefault(""),
+    history: "replace",
+    limitUrlUpdates: debounce(300),
+  });
+
   const [activeCategory, setActiveCategory] = useState("All");
-  const [isSearching, setIsSearching] = useState(false);
-  const requestId = useRef(0);
+  const activeQuery = urlQuery.trim();
 
-  useEffect(() => {
-    const nextRequest = requestId.current + 1;
-    requestId.current = nextRequest;
-    const currentRequest = nextRequest;
-
-    const timeout = setTimeout(() => {
-      setIsSearching(true);
-      client.skills
-        .search({ query })
-        .then((results) => {
-          if (requestId.current === currentRequest) {
-            setSkills(results);
-          }
+  const searchQuery = useQuery(
+    activeQuery
+      ? orpc.skills.search.queryOptions({
+          input: { query: activeQuery },
+          placeholderData: initialSkills,
+          staleTime: 30_000,
         })
-        .catch(() => {
-          if (requestId.current === currentRequest) {
-            setSkills([]);
-          }
+      : orpc.skills.search.queryOptions({
+          input: { query: "" },
+          initialData: initialSkills,
+          staleTime: 30_000,
         })
-        .finally(() => {
-          if (requestId.current === currentRequest) {
-            setIsSearching(false);
-          }
-        });
-    }, 250);
+  );
 
-    return () => clearTimeout(timeout);
-  }, [query]);
+  const skills = searchQuery.data ?? [];
 
   const categories = useMemo(() => {
     const unique = new Set(
@@ -75,15 +67,15 @@ export function SkillsExplorer({ initialSkills }: SkillsExplorerProps) {
           </InputGroupAddon>
           <InputGroupInput
             aria-label="Search skills"
-            onChange={(event) => setQuery(event.target.value)}
+            onChange={(event) => void setUrlQuery(event.target.value)}
             placeholder="Search skills..."
-            value={query}
+            value={urlQuery}
           />
         </InputGroup>
       </div>
       <div className="mx-auto mt-3 flex w-full max-w-4xl px-6">
         <span className="text-xs text-muted-foreground">
-          {isSearching ? "Searching..." : `${skills.length} skills`}
+          {searchQuery.isFetching ? "Searching..." : `${skills.length} skills`}
         </span>
       </div>
 
@@ -148,18 +140,18 @@ export function SkillsExplorer({ initialSkills }: SkillsExplorerProps) {
                         )}
 
                         <div className="mt-auto flex items-center justify-between gap-4 border-t border-border/40 pt-4">
-                          {skill.author ? (
+                          {skill.authorName ? (
                             <div className="flex items-center gap-3">
-                              {skill.author.avatarUrl ? (
+                              {skill.authorAvatarUrl ? (
                                 <img
-                                  alt={skill.author.name}
+                                  alt={skill.authorName}
                                   className="h-8 w-8 rounded-full border border-border/60 object-cover"
-                                  src={skill.author.avatarUrl}
+                                  src={skill.authorAvatarUrl}
                                 />
                               ) : null}
                               <div className="text-sm text-muted-foreground">
                                 <span className="font-medium text-foreground">
-                                  {skill.author.name}
+                                  {skill.authorName}
                                 </span>
                               </div>
                             </div>
