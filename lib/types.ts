@@ -3,7 +3,8 @@ import type { InferClientOutputs } from '@orpc/client'
 
 type Outputs = InferClientOutputs<typeof client>
 
-export type Skill = Outputs['skills']['list'][number]
+export type SkillsPage = Outputs['skills']['list']
+export type Skill = SkillsPage['items'][number]
 
 export type SkillAuthor = {
   name: string

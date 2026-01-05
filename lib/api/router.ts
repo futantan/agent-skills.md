@@ -4,45 +4,90 @@ import { env } from "@/env";
 import { buildFileTree, fetchFileContent, fetchRepoTree } from "@/lib/github-files";
 import { submitRepo } from "@/lib/repos";
 import { joinSkillsPath, parseSkillId, resolveSkillsPath } from "@/lib/skill-path";
+import { DEFAULT_PAGE_SIZE } from "@/lib/skills-pagination";
 import { os } from "@orpc/server";
-import { desc, eq, ilike, or, sql } from "drizzle-orm";
+import { desc, eq, ilike, or, sql, type SQL } from "drizzle-orm";
 import * as z from "zod";
 
-const listSkills = os.handler(async () => {
-  return db
+const paginationInput = z.object({
+  page: z.number().int().min(1).default(1),
+  pageSize: z.number().int().min(1).max(60).default(DEFAULT_PAGE_SIZE),
+});
+
+async function fetchSkillsPage({
+  where,
+  page,
+  pageSize,
+}: {
+  where?: SQL;
+  page: number;
+  pageSize: number;
+}) {
+  const offset = (page - 1) * pageSize;
+  const listQuery = db
     .select()
     .from(skillsTable)
     .orderBy(desc(skillsTable.updatedAt))
-});
+    .limit(pageSize)
+    .offset(offset);
+
+  const countQuery = db
+    .select({ count: sql<number>`count(*)` })
+    .from(skillsTable);
+
+  const list = where ? listQuery.where(where) : listQuery;
+  const count = where ? countQuery.where(where) : countQuery;
+
+  const [items, countRows] = await Promise.all([list, count]);
+  const total = Number(countRows[0]?.count ?? 0);
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+
+  return {
+    items,
+    total,
+    page,
+    pageSize,
+    totalPages,
+  };
+}
+
+const listSkills = os
+  .input(paginationInput)
+  .handler(async ({ input }) => {
+    return fetchSkillsPage({
+      page: input.page,
+      pageSize: input.pageSize,
+    });
+  });
 
 const searchSkills = os
   .input(
     z.object({
       query: z.string().optional(),
+      page: z.number().int().min(1).default(1),
+      pageSize: z.number().int().min(1).max(60).default(DEFAULT_PAGE_SIZE),
     })
   )
   .handler(async ({ input }) => {
     const query = input.query?.trim() ?? "";
     if (!query) {
-      return db
-        .select()
-        .from(skillsTable)
-        .orderBy(desc(skillsTable.updatedAt))
+      return fetchSkillsPage({
+        page: input.page,
+        pageSize: input.pageSize,
+      });
     }
 
     const escaped = query.replace(/[%_]/g, "\\$&");
     const pattern = `%${escaped}%`;
-    return db
-      .select()
-      .from(skillsTable)
-      .where(
-        or(
-          ilike(skillsTable.name, pattern),
-          ilike(skillsTable.description, pattern),
-          ilike(sql<string>`array_to_string(${skillsTable.tags}, ',')`, pattern)
-        )
-      )
-      .orderBy(desc(skillsTable.updatedAt))
+    return fetchSkillsPage({
+      page: input.page,
+      pageSize: input.pageSize,
+      where: or(
+        ilike(skillsTable.name, pattern),
+        ilike(skillsTable.description, pattern),
+        ilike(sql<string>`array_to_string(${skillsTable.tags}, ',')`, pattern)
+      ),
+    });
   });
 
 const findSkill = os

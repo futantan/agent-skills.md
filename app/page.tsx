@@ -4,9 +4,31 @@ import { SiteHeader } from "@/components/site-header";
 import { SkillsExplorer } from "@/components/skills-explorer";
 import { client } from "@/lib/api/orpc";
 import { siteConfig } from "@/lib/site-config";
+import { DEFAULT_PAGE_SIZE } from "@/lib/skills-pagination";
 
-export default async function Home() {
-  const skills = await client.skills.list();
+type SearchParams = Record<string, string | string[] | undefined>;
+type HomeProps = {
+  searchParams?: Promise<SearchParams>;
+};
+
+export default async function Home({ searchParams }: HomeProps) {
+  const resolvedSearchParams = await searchParams;
+  const query =
+    typeof resolvedSearchParams?.q === "string"
+      ? resolvedSearchParams.q.trim()
+      : "";
+  const pageParam =
+    typeof resolvedSearchParams?.page === "string"
+      ? resolvedSearchParams.page
+      : "";
+  const parsedPage = Number.parseInt(pageParam, 10);
+  const page = Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : 1;
+
+  const skillsPage = await client.skills.search({
+    query: query.trim() || undefined,
+    page,
+    pageSize: DEFAULT_PAGE_SIZE,
+  });
 
   return (
     <div className="min-h-screen bg-background">
@@ -33,7 +55,7 @@ export default async function Home() {
                   <span className="relative inline-flex h-2 w-2 rounded-full bg-primary"></span>
                 </span>
                 <span className="text-muted-foreground">
-                  {skills.length} Skills Available
+                  {skillsPage.total} Skills Available
                 </span>
               </div>
 
@@ -50,7 +72,7 @@ export default async function Home() {
         </div>
       </div>
 
-      <SkillsExplorer initialSkills={skills} />
+      <SkillsExplorer initialPage={skillsPage} initialQuery={query} />
 
       <section className="relative border-y border-border/60 bg-muted/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
         <FaqSection />

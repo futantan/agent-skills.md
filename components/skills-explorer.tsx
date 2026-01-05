@@ -7,44 +7,59 @@ import {
   InputGroupButton,
   InputGroupInput,
 } from "@/components/ui/input-group";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { orpc } from "@/lib/api/orpc";
-import { Skill } from "@/lib/types";
+import { buildPaginationItems, DEFAULT_PAGE_SIZE } from "@/lib/skills-pagination";
+import type { SkillsPage } from "@/lib/types";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowRight, Loader2, Search, X } from "lucide-react";
 import Link from "next/link";
-import { debounce, parseAsString, useQueryState } from "nuqs";
+import { debounce, parseAsInteger, parseAsString, useQueryState } from "nuqs";
 import { useEffect, useMemo, useState } from "react";
 
 type SkillsExplorerProps = {
-  initialSkills: Skill[];
+  initialPage: SkillsPage;
+  initialQuery: string;
 };
 
-export function SkillsExplorer({ initialSkills }: SkillsExplorerProps) {
+export function SkillsExplorer({ initialPage, initialQuery }: SkillsExplorerProps) {
   const [urlQuery, setUrlQuery] = useQueryState("q", {
     ...parseAsString.withDefault(""),
     history: "replace",
     limitUrlUpdates: debounce(300),
   });
+  const [page, setPage] = useQueryState("page", {
+    ...parseAsInteger.withDefault(1),
+    history: "replace",
+  });
 
   const [activeCategory, setActiveCategory] = useState("All");
   const activeQuery = urlQuery.trim();
+  const pageSize = DEFAULT_PAGE_SIZE;
+  const isInitialState = page === initialPage.page && activeQuery === initialQuery;
 
-  const searchQuery = useQuery<Skill[]>(
-    activeQuery
-      ? orpc.skills.search.queryOptions({
-          input: { query: activeQuery },
-          placeholderData: initialSkills,
-          staleTime: 30_000,
-        })
-      : orpc.skills.search.queryOptions({
-          input: { query: "" },
-          initialData: initialSkills,
-          staleTime: 30_000,
-        })
+  const searchQuery = useQuery<SkillsPage>(
+    orpc.skills.search.queryOptions({
+      input: { query: activeQuery || undefined, page, pageSize },
+      initialData: isInitialState ? initialPage : undefined,
+      placeholderData: (previous) => previous,
+      staleTime: 30_000,
+    })
   );
 
-  const skills = searchQuery.data ?? [];
+  const pageData = searchQuery.data ?? initialPage;
+  const skills = pageData.items;
+  const totalPages = pageData.totalPages;
+  const currentPage = page;
 
   const categories = useMemo(() => {
     const unique = new Set(
@@ -59,6 +74,24 @@ export function SkillsExplorer({ initialSkills }: SkillsExplorerProps) {
     }
   }, [activeCategory, categories]);
 
+  const handleSearchChange = (value: string) => {
+    void setUrlQuery(value);
+    if (page !== 1) {
+      void setPage(1);
+    }
+  };
+
+  useEffect(() => {
+    if (!searchQuery.isPlaceholderData && totalPages > 0 && page > totalPages) {
+      void setPage(totalPages);
+    }
+  }, [page, searchQuery.isPlaceholderData, setPage, totalPages]);
+
+  const paginationItems = useMemo(
+    () => buildPaginationItems(currentPage, totalPages),
+    [currentPage, totalPages]
+  );
+
   return (
     <>
       <div className="mx-auto -mt-6 flex w-full max-w-4xl px-6 relative">
@@ -68,7 +101,7 @@ export function SkillsExplorer({ initialSkills }: SkillsExplorerProps) {
           </InputGroupAddon>
           <InputGroupInput
             aria-label="Search skills"
-            onChange={(event) => void setUrlQuery(event.target.value)}
+            onChange={(event) => handleSearchChange(event.target.value)}
             placeholder="Search skills..."
             value={urlQuery}
           />
@@ -79,7 +112,7 @@ export function SkillsExplorer({ initialSkills }: SkillsExplorerProps) {
               ) : (
                 <InputGroupButton
                   aria-label="Clear search"
-                  onClick={() => void setUrlQuery("")}
+                  onClick={() => handleSearchChange("")}
                   size="icon-sm"
                   variant="ghost"
                 >
@@ -185,6 +218,45 @@ export function SkillsExplorer({ initialSkills }: SkillsExplorerProps) {
             </TabsContent>
           ))}
         </Tabs>
+        {totalPages > 1 && (
+          <div className="mt-10 flex flex-col items-center gap-4">
+            <p className="text-sm text-muted-foreground">
+              Page {currentPage} of {totalPages} · {pageData.total} results
+            </p>
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious
+                    disabled={currentPage <= 1}
+                    onClick={() => void setPage(currentPage - 1)}
+                  />
+                </PaginationItem>
+                {paginationItems.map((item, index) =>
+                  item === "ellipsis" ? (
+                    <PaginationItem key={`ellipsis-${index}`}>
+                      <PaginationEllipsis />
+                    </PaginationItem>
+                  ) : (
+                    <PaginationItem key={item}>
+                      <PaginationLink
+                        isActive={item === currentPage}
+                        onClick={() => void setPage(item)}
+                      >
+                        {item}
+                      </PaginationLink>
+                    </PaginationItem>
+                  )
+                )}
+                <PaginationItem>
+                  <PaginationNext
+                    disabled={currentPage >= totalPages}
+                    onClick={() => void setPage(currentPage + 1)}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          </div>
+        )}
       </main>
     </>
   );
