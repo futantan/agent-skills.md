@@ -1,48 +1,110 @@
 import { db } from "@/db";
 import { reposTable, skillsTable } from "@/db/schema";
 import { env } from "@/env";
-import { buildFileTree, fetchFileContent, fetchRepoTree } from "@/lib/github-files";
+import {
+  buildFileTree,
+  fetchFileContent,
+  fetchRepoTree,
+} from "@/lib/github-files";
 import { submitRepo } from "@/lib/repos";
-import { joinSkillsPath, parseSkillId, resolveSkillsPath } from "@/lib/skill-path";
+import {
+  joinSkillsPath,
+  parseSkillId,
+  resolveSkillsPath,
+} from "@/lib/skill-path";
 import { os } from "@orpc/server";
 import { desc, eq, ilike, or, sql } from "drizzle-orm";
 import * as z from "zod";
 
-const listSkills = os.handler(async () => {
-  return db
+const DEFAULT_PER_PAGE = 12;
+const MAX_PER_PAGE = 50;
+
+const paginationInput = z.object({
+  page: z.number().int().min(1).optional(),
+  perPage: z.number().int().min(1).max(MAX_PER_PAGE).optional(),
+});
+
+type PaginationInput = z.infer<typeof paginationInput>;
+
+function buildSearchCondition(query?: string) {
+  const trimmed = query?.trim();
+  if (!trimmed) {
+    return null;
+  }
+
+  const escaped = trimmed.replace(/[%_]/g, "\\$&");
+  const pattern = `%${escaped}%`;
+
+  return or(
+    ilike(skillsTable.name, pattern),
+    ilike(skillsTable.description, pattern),
+    ilike(sql<string>`array_to_string(${skillsTable.tags}, ',')`, pattern)
+  );
+}
+
+async function getPaginatedSkills({
+  query,
+  page,
+  perPage,
+}: PaginationInput & { query?: string }) {
+  const where = buildSearchCondition(query);
+  const pageSize = Math.min(
+    Math.max(perPage ?? DEFAULT_PER_PAGE, 1),
+    MAX_PER_PAGE
+  );
+
+  let countQuery = db
+    .select({ count: sql<number>`count(*)` })
+    .from(skillsTable);
+  if (where) {
+    countQuery = countQuery.where(where);
+  }
+
+  const [{ count }] = await countQuery;
+  const total = Number(count ?? 0);
+  const totalPages = total > 0 ? Math.ceil(total / pageSize) : 1;
+  const requestedPage = page ?? 1;
+  const safePage = Math.min(Math.max(requestedPage, 1), totalPages);
+  const offset = (safePage - 1) * pageSize;
+
+  let skillsQuery = db
     .select()
     .from(skillsTable)
     .orderBy(desc(skillsTable.updatedAt))
-});
+    .limit(pageSize)
+    .offset(offset);
+
+  if (where) {
+    skillsQuery = skillsQuery.where(where);
+  }
+
+  const items = await skillsQuery;
+
+  return {
+    items,
+    page: safePage,
+    perPage: pageSize,
+    total,
+    totalPages,
+  } as const;
+}
+
+const listSkills = os
+  .input(paginationInput.optional())
+  .handler(async ({ input }) => {
+    return getPaginatedSkills(input ?? {});
+  });
 
 const searchSkills = os
   .input(
-    z.object({
-      query: z.string().optional(),
-    })
+    z
+      .object({
+        query: z.string().optional(),
+      })
+      .merge(paginationInput)
   )
   .handler(async ({ input }) => {
-    const query = input.query?.trim() ?? "";
-    if (!query) {
-      return db
-        .select()
-        .from(skillsTable)
-        .orderBy(desc(skillsTable.updatedAt))
-    }
-
-    const escaped = query.replace(/[%_]/g, "\\$&");
-    const pattern = `%${escaped}%`;
-    return db
-      .select()
-      .from(skillsTable)
-      .where(
-        or(
-          ilike(skillsTable.name, pattern),
-          ilike(skillsTable.description, pattern),
-          ilike(sql<string>`array_to_string(${skillsTable.tags}, ',')`, pattern)
-        )
-      )
-      .orderBy(desc(skillsTable.updatedAt))
+    return getPaginatedSkills(input);
   });
 
 const findSkill = os
@@ -53,7 +115,7 @@ const findSkill = os
       .from(skillsTable)
       .where(eq(skillsTable.id, input.id))
       .limit(1);
-    return row
+    return row;
   });
 
 const submitRepoHandler = os
@@ -64,7 +126,8 @@ const submitRepoHandler = os
   )
   .handler(async ({ input, context }) => {
     const headers = (context as { headers?: Headers })?.headers;
-    const token = headers?.get("x-github-token") ?? env.GITHUB_TOKEN ?? undefined;
+    const token =
+      headers?.get("x-github-token") ?? env.GITHUB_TOKEN ?? undefined;
     return submitRepo(input.url, token);
   });
 
@@ -77,7 +140,8 @@ const skillTree = os
     }
 
     const headers = (context as { headers?: Headers })?.headers;
-    const token = headers?.get("x-github-token") ?? env.GITHUB_TOKEN ?? undefined;
+    const token =
+      headers?.get("x-github-token") ?? env.GITHUB_TOKEN ?? undefined;
 
     const { owner, repo, skillDir } = params;
     const repoId = `${owner}/${repo}`;
@@ -131,7 +195,8 @@ const skillFile = os
     }
 
     const headers = (context as { headers?: Headers })?.headers;
-    const token = headers?.get("x-github-token") ?? env.GITHUB_TOKEN ?? undefined;
+    const token =
+      headers?.get("x-github-token") ?? env.GITHUB_TOKEN ?? undefined;
 
     const MAX_PREVIEW_BYTES = 512 * 1024;
     const TEXT_EXTENSIONS = new Set([
@@ -175,7 +240,7 @@ const skillFile = os
 
       const name = decodedPath.split("/").pop() ?? decodedPath;
       const extension = name.includes(".")
-        ? name.split(".").pop()?.toLowerCase() ?? ""
+        ? (name.split(".").pop()?.toLowerCase() ?? "")
         : "";
       const isText = !extension || TEXT_EXTENSIONS.has(extension);
 

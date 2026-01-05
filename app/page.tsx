@@ -6,7 +6,7 @@ import { client } from "@/lib/api/orpc";
 import { siteConfig } from "@/lib/site-config";
 
 export default async function Home() {
-  const skills = await client.skills.list();
+  const initialSkills = await client.skills.list({ page: 1 });
 
   return (
     <div className="min-h-screen bg-background">
@@ -33,7 +33,7 @@ export default async function Home() {
                   <span className="relative inline-flex h-2 w-2 rounded-full bg-primary"></span>
                 </span>
                 <span className="text-muted-foreground">
-                  {skills.length} Skills Available
+                  {initialSkills.total} Skills Available
                 </span>
               </div>
 
@@ -50,7 +50,7 @@ export default async function Home() {
         </div>
       </div>
 
-      <SkillsExplorer initialSkills={skills} />
+      <SkillsExplorer initialPage={initialSkills} />
 
       <section className="relative border-y border-border/60 bg-muted/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
         <FaqSection />
