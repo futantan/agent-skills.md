@@ -3,6 +3,7 @@
 import { client } from "@/lib/api/orpc";
 import { FileText, Folder } from "lucide-react";
 import { useEffect, useState } from "react";
+import ReactMarkdown from "react-markdown";
 
 type FileNode = {
   name: string;
@@ -222,14 +223,22 @@ function TreeNode({ node, depth, onSelect, selectedPath }: TreeNodeProps) {
 
 function FilePreviewPanel({ preview }: { preview: FilePreview }) {
   if (preview.kind === "text") {
+    const isMarkdown = preview.path.toLowerCase().endsWith(".md");
+
     return (
       <div>
         <div className="mb-3 text-xs uppercase tracking-[0.2em] text-muted-foreground">
           {preview.path}
         </div>
-        <pre className="max-h-[520px] overflow-auto whitespace-pre-wrap break-words rounded-xl border border-border/40 bg-muted/20 p-4 text-xs leading-relaxed text-foreground">
-          {preview.content}
-        </pre>
+        {isMarkdown ? (
+          <article className="prose lg:prose-xl">
+            <ReactMarkdown>{preview.content}</ReactMarkdown>
+          </article>
+        ) : (
+          <pre className="max-h-130 overflow-auto whitespace-pre-wrap wrap-break-word rounded-xl border border-border/40 bg-muted/20 p-4 text-xs leading-relaxed text-foreground">
+            {preview.content}
+          </pre>
+        )}
       </div>
     );
   }
