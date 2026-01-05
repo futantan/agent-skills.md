@@ -224,6 +224,9 @@ function TreeNode({ node, depth, onSelect, selectedPath }: TreeNodeProps) {
 function FilePreviewPanel({ preview }: { preview: FilePreview }) {
   if (preview.kind === "text") {
     const isMarkdown = preview.path.toLowerCase().endsWith(".md");
+    const markdownContent = isMarkdown
+      ? stripFrontmatter(preview.content)
+      : preview.content;
 
     return (
       <div>
@@ -231,8 +234,8 @@ function FilePreviewPanel({ preview }: { preview: FilePreview }) {
           {preview.path}
         </div>
         {isMarkdown ? (
-          <article className="prose lg:prose-xl">
-            <ReactMarkdown>{preview.content}</ReactMarkdown>
+          <article className="prose prose-neutral max-w-none rounded-2xl border border-border/60 bg-gradient-to-br from-background via-background/80 to-muted/20 p-6 shadow-[0_18px_40px_-32px_rgba(0,0,0,0.55)] lg:prose-xl prose-headings:tracking-tight prose-headings:text-foreground prose-h1:text-3xl prose-h2:text-2xl prose-h3:text-xl prose-p:text-foreground/80 prose-a:text-primary prose-a:decoration-primary/40 prose-a:underline-offset-4 hover:prose-a:decoration-primary prose-strong:text-foreground prose-code:rounded-md prose-code:bg-muted/60 prose-code:px-1.5 prose-code:py-0.5 prose-code:text-foreground prose-pre:rounded-xl prose-pre:border prose-pre:border-border/60 prose-pre:bg-muted/30 prose-pre:shadow-inner prose-blockquote:rounded-r-lg prose-blockquote:border-l-4 prose-blockquote:border-primary/50 prose-blockquote:bg-muted/30 prose-blockquote:px-4 prose-blockquote:py-2 prose-li:marker:text-primary/60 prose-hr:border-border/60 prose-th:bg-muted/40 prose-td:border-border/50">
+            <ReactMarkdown>{markdownContent}</ReactMarkdown>
           </article>
         ) : (
           <pre className="max-h-130 overflow-auto whitespace-pre-wrap wrap-break-word rounded-xl border border-border/40 bg-muted/20 p-4 text-xs leading-relaxed text-foreground">
@@ -268,6 +271,11 @@ function formatBytes(value: number) {
     return `${(value / 1024).toFixed(1)} KB`;
   }
   return `${(value / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function stripFrontmatter(value: string) {
+  const frontmatterPattern = /^---\s*\n[\s\S]*?\n---\s*\n?/;
+  return value.replace(frontmatterPattern, "");
 }
 
 function findFileByName(node: FileNode, name: string): FileNode | null {
