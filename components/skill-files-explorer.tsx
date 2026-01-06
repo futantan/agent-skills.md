@@ -114,7 +114,7 @@ export function SkillFilesExplorer({
   };
 
   return (
-    <section className="mt-10 rounded-2xl border border-border/40 bg-card/40 p-5 sm:p-8">
+    <section className="mt-10 rounded-2xl bg-card/40">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h2 className="text-lg font-semibold text-foreground">Skill Files</h2>
@@ -131,7 +131,7 @@ export function SkillFilesExplorer({
       </div>
 
       <div className="mt-5 grid gap-5 sm:mt-6 sm:gap-6 lg:grid-cols-[0.6fr_2fr]">
-        <div className="rounded-2xl border border-border/50 bg-background/40 p-3 sm:p-4">
+        <div className="rounded-2xl border border-border/50 bg-background/40 p-2 sm:p-3 md:p-4">
           {treeLoading ? (
             <p className="text-sm text-muted-foreground">Loading file tree…</p>
           ) : treeError ? (
@@ -150,7 +150,7 @@ export function SkillFilesExplorer({
           )}
         </div>
 
-        <div className="rounded-2xl border border-border/50 bg-background/40 p-3 sm:p-4">
+        <div className="min-w-0">
           {previewLoading ? (
             <p className="text-sm text-muted-foreground">
               Loading file preview…
@@ -230,11 +230,12 @@ function FilePreviewPanel({ preview }: { preview: FilePreview }) {
 
     return (
       <div>
-        <div className="mb-3 text-xs uppercase tracking-[0.2em] text-muted-foreground">
-          {preview.path}
+        <div className="mb-2 flex items-center gap-2 text-[11px] uppercase tracking-[0.24em] text-muted-foreground/70 sm:mb-3">
+          <span className="inline-block h-1.5 w-1.5 rounded-full bg-primary/60" />
+          <span className="truncate">{preview.path}</span>
         </div>
         {isMarkdown ? (
-          <article className="prose prose-neutral max-w-none break-words rounded-2xl border border-border/60 bg-gradient-to-br from-background via-background/80 to-muted/20 p-6 shadow-[0_18px_40px_-32px_rgba(0,0,0,0.55)] lg:prose-xl prose-headings:tracking-tight prose-headings:text-foreground prose-h1:text-3xl prose-h2:text-2xl prose-h3:text-xl prose-p:text-foreground/80 prose-a:text-primary prose-a:decoration-primary/40 prose-a:underline-offset-4 hover:prose-a:decoration-primary prose-strong:text-foreground prose-code:break-words prose-code:rounded-md prose-code:bg-muted/60 prose-code:px-1.5 prose-code:py-0.5 prose-code:text-foreground prose-pre:rounded-xl prose-pre:border prose-pre:border-border/60 prose-pre:bg-muted/30 prose-pre:shadow-inner prose-pre:overflow-x-auto prose-blockquote:rounded-r-lg prose-blockquote:border-l-4 prose-blockquote:border-primary/50 prose-blockquote:bg-muted/30 prose-blockquote:px-4 prose-blockquote:py-2 prose-li:marker:text-primary/60 prose-hr:border-border/60 prose-img:max-w-full prose-th:bg-muted/40 prose-td:border-border/50">
+          <article className="prose prose-neutral max-w-full min-w-0 break-words rounded-2xl border border-border/60 bg-gradient-to-br from-background via-background/80 to-muted/20 p-4 sm:p-5 lg:p-6 shadow-[0_18px_40px_-32px_rgba(0,0,0,0.55)] lg:prose-xl prose-headings:tracking-tight prose-headings:text-foreground prose-h1:text-3xl prose-h2:text-2xl prose-h3:text-xl prose-p:text-foreground/80 prose-a:text-primary prose-a:decoration-primary/40 prose-a:underline-offset-4 hover:prose-a:decoration-primary prose-strong:text-foreground prose-code:break-words prose-code:rounded-md prose-code:bg-muted/60 prose-code:px-1.5 prose-code:py-0.5 prose-code:text-foreground prose-pre:rounded-xl prose-pre:border prose-pre:border-border/60 prose-pre:bg-muted/30 prose-pre:shadow-inner prose-pre:overflow-x-auto prose-blockquote:rounded-r-lg prose-blockquote:border-l-4 prose-blockquote:border-primary/50 prose-blockquote:bg-muted/30 prose-blockquote:px-4 prose-blockquote:py-2 prose-li:marker:text-primary/60 prose-hr:border-border/60 prose-img:max-w-full prose-table:block prose-table:w-full prose-table:overflow-x-auto prose-th:bg-muted/40 prose-td:border-border/50">
             <ReactMarkdown>{markdownContent}</ReactMarkdown>
           </article>
         ) : (
