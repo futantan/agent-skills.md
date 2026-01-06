@@ -2,11 +2,29 @@ import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { SkillFilesExplorer } from "@/components/skill-files-explorer";
 import { client } from "@/lib/api/orpc";
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 type SkillDetailPageProps = {
   params: Promise<{ id: string | string[] }>;
 };
+
+export async function generateMetadata({
+  params,
+}: SkillDetailPageProps): Promise<Metadata> {
+  const { id } = await params;
+  const rawId = Array.isArray(id) ? id.join("/") : id;
+  const decodedId = decodeURIComponent(rawId);
+  const normalizedId = decodedId.replace(/^\/?skills\//, "");
+  const skill = await client.skills.find({ id: normalizedId });
+  const title = skill?.name
+    ? `${skill.name} Skill | Agent Skills`
+    : "Agent Skills";
+
+  return {
+    title,
+  };
+}
 
 export default async function SkillDetailPage({
   params,
