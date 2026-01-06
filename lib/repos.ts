@@ -1,7 +1,6 @@
 import { db } from "@/db";
 import { reposTable, skillsTable } from "@/db/schema";
 import { fetchSkillsFromRepo, parseGitHubRepo } from "@/lib/skills-parser";
-import { resolveSkillsPath } from "@/lib/skill-path";
 import { and, eq } from "drizzle-orm";
 
 type GitHubRepoInfo = {
@@ -52,10 +51,9 @@ export async function submitRepo(
     repoInfo = null;
   }
 
-  const normalizedSkillsPath = resolveSkillsPath(parsed.skillsPath);
-  const skills = await fetchSkillsFromRepo(repoInput, {
+  const { skills, skillsPath } = await fetchSkillsFromRepo(repoInput, {
     token,
-    skillsPath: normalizedSkillsPath,
+    skillsPath: parsed.skillsPath,
   });
   const uniqueSkills = new Map<string, (typeof skills)[number]>();
   for (const skill of skills) {
@@ -74,7 +72,7 @@ export async function submitRepo(
       id: repoId,
       owner: parsed.owner,
       name: parsed.repo,
-      skillsPath: normalizedSkillsPath,
+      skillsPath,
       url: repoInfo?.html_url ?? fallbackUrl,
       license: repoInfo?.license?.spdx_id ?? repoInfo?.license?.name ?? null,
       stars: repoInfo?.stargazers_count ?? 0,

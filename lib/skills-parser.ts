@@ -18,6 +18,11 @@ type FetchOptions = {
   skillsPath?: string;
 };
 
+type FetchResult = {
+  skills: ParsedSkill[];
+  skillsPath: string;
+};
+
 type GitHubContent = {
   type: "file" | "dir";
   name: string;
@@ -30,7 +35,7 @@ const API_BASE = "https://api.github.com";
 export async function fetchSkillsFromRepo(
   repoInput: string,
   options: FetchOptions = {}
-): Promise<ParsedSkill[]> {
+): Promise<FetchResult> {
   const repo = parseGitHubRepo(repoInput);
   if (!repo) {
     throw new Error("Invalid GitHub repository URL");
@@ -40,15 +45,28 @@ export async function fetchSkillsFromRepo(
     ? { Authorization: `Bearer ${options.token}` }
     : undefined;
 
-  const basePath = resolveSkillsPath(options.skillsPath ?? repo.skillsPath);
-  const basePathSegment = basePath ? `/${basePath}` : "";
-  const skillsDir = await getJson(
-    `${API_BASE}/repos/${repo.owner}/${repo.repo}/contents${basePathSegment}`,
-    headers
-  );
+  const hasExplicitPath =
+    options.skillsPath !== undefined || repo.skillsPath !== undefined;
+  const requestedPath = resolveSkillsPath(options.skillsPath ?? repo.skillsPath);
+  const fetchDir = async (path: string, allowFailure: boolean) => {
+    const pathSegment = path ? `/${path}` : "";
+    const request = getJson(
+      `${API_BASE}/repos/${repo.owner}/${repo.repo}/contents${pathSegment}`,
+      headers
+    );
+    return allowFailure ? request.catch(() => null) : request;
+  };
+
+  let basePath = requestedPath;
+  let skillsDir = await fetchDir(basePath, !hasExplicitPath);
+
+  if (!skillsDir && !hasExplicitPath && requestedPath === "skills") {
+    basePath = "";
+    skillsDir = await fetchDir(basePath, true);
+  }
 
   if (!Array.isArray(skillsDir)) {
-    return [];
+    return { skills: [], skillsPath: basePath };
   }
 
   const skillDirs = skillsDir.filter(
@@ -85,7 +103,7 @@ export async function fetchSkillsFromRepo(
     });
   }
 
-  return skills;
+  return { skills, skillsPath: basePath };
 }
 
 export function parseGitHubRepo(input: string): ParsedRepo | null {
