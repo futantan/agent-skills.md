@@ -109,8 +109,30 @@ const findSkill = os
   .input(z.object({ id: z.string() }))
   .handler(async ({ input }) => {
     const [row] = await db
-      .select()
+      .select({
+        id: skillsTable.id,
+        repoId: skillsTable.repoId,
+        name: skillsTable.name,
+        description: skillsTable.description,
+        category: skillsTable.category,
+        tags: skillsTable.tags,
+        authorName: skillsTable.authorName,
+        authorUrl: skillsTable.authorUrl,
+        authorAvatarUrl: skillsTable.authorAvatarUrl,
+        createdAt: skillsTable.createdAt,
+        updatedAt: skillsTable.updatedAt,
+        repoOwner: reposTable.owner,
+        repoName: reposTable.name,
+        repoUrl: reposTable.url,
+        repoLicense: reposTable.license,
+        repoStars: reposTable.stars,
+        repoForks: reposTable.forks,
+        repoOwnerName: reposTable.ownerName,
+        repoOwnerUrl: reposTable.ownerUrl,
+        repoOwnerAvatarUrl: reposTable.ownerAvatarUrl,
+      })
       .from(skillsTable)
+      .leftJoin(reposTable, eq(skillsTable.repoId, reposTable.id))
       .where(eq(skillsTable.id, input.id))
       .limit(1);
     return row
