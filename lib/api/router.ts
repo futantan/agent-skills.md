@@ -25,8 +25,23 @@ async function fetchSkillsPage({
 }) {
   const offset = (page - 1) * pageSize;
   const listQuery = db
-    .select()
+    .select({
+      id: skillsTable.id,
+      repoId: skillsTable.repoId,
+      name: skillsTable.name,
+      description: skillsTable.description,
+      category: skillsTable.category,
+      tags: skillsTable.tags,
+      authorName: skillsTable.authorName,
+      authorUrl: skillsTable.authorUrl,
+      authorAvatarUrl: skillsTable.authorAvatarUrl,
+      createdAt: skillsTable.createdAt,
+      updatedAt: skillsTable.updatedAt,
+      repoStars: reposTable.stars,
+      repoForks: reposTable.forks,
+    })
     .from(skillsTable)
+    .leftJoin(reposTable, eq(skillsTable.repoId, reposTable.id))
     .orderBy(desc(skillsTable.updatedAt))
     .limit(pageSize)
     .offset(offset);
