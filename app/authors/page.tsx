@@ -7,6 +7,9 @@ import { skillsTable } from "@/db/schema";
 import type { Metadata } from "next";
 import Link from "next/link";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 60;
+
 export const metadata: Metadata = {
   title: "GitHub Authors | Agent Skills",
   description:
