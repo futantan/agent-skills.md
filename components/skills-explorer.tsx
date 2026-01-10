@@ -148,7 +148,6 @@ export function SkillsExplorer({
                   .map((skill, index) => {
                     const repoStars = skill.repoStars ?? 0;
                     const repoForks = skill.repoForks ?? 0;
-                    const showRepoStats = repoStars > 0;
 
                     return (
                       <Link
@@ -203,20 +202,18 @@ export function SkillsExplorer({
                                 </span>
                               )}
                             </div>
-                            {showRepoStats ? (
-                              <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                            <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                              <span className="inline-flex items-center gap-1">
+                                <Star className="h-3.5 w-3.5" />
+                                {repoStars.toLocaleString()}
+                              </span>
+                              {repoForks > 0 ? (
                                 <span className="inline-flex items-center gap-1">
-                                  <Star className="h-3.5 w-3.5" />
-                                  {repoStars.toLocaleString()}
+                                  <GitFork className="h-3.5 w-3.5" />
+                                  {repoForks.toLocaleString()}
                                 </span>
-                                {repoForks > 0 ? (
-                                  <span className="inline-flex items-center gap-1">
-                                    <GitFork className="h-3.5 w-3.5" />
-                                    {repoForks.toLocaleString()}
-                                  </span>
-                                ) : null}
-                              </div>
-                            ) : null}
+                              ) : null}
+                            </div>
                           </div>
 
                           <div className="absolute inset-0 -z-10 bg-linear-to-br from-primary/5 via-transparent to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
