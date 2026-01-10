@@ -11,14 +11,14 @@ export const dynamic = "force-dynamic";
 export const revalidate = 60;
 
 export const metadata: Metadata = {
-  title: "GitHub Authors | Agent Skills",
+  title: "Agent Skills Authors | Agent Skills",
   description:
     "Browse every GitHub author we have indexed, and explore their published Agent Skills.",
   alternates: {
     canonical: "/authors",
   },
   openGraph: {
-    title: "GitHub Authors | Agent Skills",
+    title: "Agent Skills Authors | Agent Skills",
     description:
       "Browse every GitHub author we have indexed, and explore their published Agent Skills.",
     url: "/authors",
@@ -26,7 +26,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary",
-    title: "GitHub Authors | Agent Skills",
+    title: "Agent Skills Authors | Agent Skills",
     description:
       "Browse every GitHub author we have indexed, and explore their published Agent Skills.",
   },
@@ -108,7 +108,7 @@ export default async function AuthorsPage() {
 
         <div className="mx-auto max-w-3xl text-center">
           <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">
-            GitHub Authors
+            Agent Skills Authors
           </p>
           <h1 className="mt-4 text-3xl font-semibold tracking-tight text-foreground sm:text-5xl">
             Every creator who shared a skill

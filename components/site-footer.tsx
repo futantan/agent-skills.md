@@ -14,7 +14,7 @@ export function SiteFooter() {
               className="mt-2 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-foreground transition hover:text-primary"
               href="/authors"
             >
-              Browse GitHub Authors
+              Browse Agent Skills Authors
               <span className="text-primary">→</span>
             </Link>
           </div>
