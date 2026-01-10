@@ -127,36 +127,35 @@ export default async function AuthorsPage() {
             {authors.map((author, index) => (
               <Link
                 key={author.slug}
-                className="group relative overflow-hidden rounded-2xl border border-border/50 bg-card/40 p-5 shadow-lg shadow-primary/5 transition hover:border-primary/40 hover:bg-card"
+                className="group relative flex h-full flex-col gap-5 rounded-[18px] border border-border/60 bg-card p-6 shadow-[0_1px_2px_rgba(15,23,42,0.06)] transition hover:-translate-y-0.5 hover:border-foreground/20 hover:shadow-[0_16px_32px_rgba(15,23,42,0.12)]"
                 href={`/authors/${author.slug}`}
                 style={{ animationDelay: `${index * 40}ms` }}
               >
-                <div className="absolute inset-0 -z-10 bg-linear-to-br from-primary/10 via-transparent to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
                 <div className="flex items-center gap-4">
                   {author.avatarUrl ? (
                     <img
                       alt={author.name}
-                      className="h-12 w-12 rounded-full border border-border/60 object-cover"
+                      className="h-12 w-12 rounded-full border border-border/70 object-cover"
                       src={author.avatarUrl}
                     />
                   ) : (
-                    <div className="flex h-12 w-12 items-center justify-center rounded-full border border-border/60 bg-muted text-sm font-semibold text-foreground">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-full border border-border/70 bg-muted text-sm font-semibold text-foreground">
                       {author.name.slice(0, 2).toUpperCase()}
                     </div>
                   )}
                   <div>
-                    <p className="text-base font-semibold text-foreground transition-colors group-hover:text-primary">
+                    <p className="text-base font-semibold text-foreground">
                       {author.name}
                     </p>
-                    <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                    <p className="text-xs uppercase tracking-[0.24em] text-muted-foreground">
                       {author.skillCount} Skills
                     </p>
                   </div>
                 </div>
-                <div className="mt-4 flex items-center justify-between text-xs text-muted-foreground">
+                <div className="mt-auto flex items-center justify-between border-t border-border/60 pt-4 text-xs text-muted-foreground">
                   <span>View skills</span>
-                  <span className="text-primary transition group-hover:translate-x-0.5">
-                    →
+                  <span className="font-medium text-foreground/80 transition group-hover:text-foreground">
+                    Open profile
                   </span>
                 </div>
               </Link>
