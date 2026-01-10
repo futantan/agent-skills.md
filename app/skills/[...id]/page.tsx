@@ -8,7 +8,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-export const revalidate = 60 * 60 * 24; // 1 day
+export const revalidate = 86400;
 
 type SkillDetailPageProps = {
   params: Promise<{ id: string | string[] }>;
