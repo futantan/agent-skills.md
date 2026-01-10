@@ -3,7 +3,7 @@ import { SiteHeader } from "@/components/site-header";
 import { SkillFilesExplorer } from "@/components/skill-files-explorer";
 import { client } from "@/lib/api/orpc";
 import { getAuthorSlug } from "@/lib/author-utils";
-import { GitFork, Link2, Star } from "lucide-react";
+import { Github, GitFork, Star } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -190,9 +190,10 @@ export default async function SkillDetailPage({
                       Repository
                     </p>
                     <div className="mt-3 flex items-center gap-3 text-foreground">
-                      <div className="flex h-9 w-9 items-center justify-center rounded-full border border-border/60 bg-background/60">
-                        <Link2 className="h-4 w-4 text-muted-foreground" />
+                      <div className="flex h-9 w-9 items-center justify-center rounded-full border border-[#1f2328] bg-[#24292f] shadow-sm shadow-black/30">
+                        <Github className="h-4 w-4 text-white" />
                       </div>
+
                       {skill.repoUrl ? (
                         <a
                           className="text-lg font-semibold transition-colors hover:text-primary"
