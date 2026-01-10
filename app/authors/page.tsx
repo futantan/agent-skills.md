@@ -97,10 +97,10 @@ export default async function AuthorsPage() {
   });
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       <SiteHeader />
 
-      <main className="relative mx-auto container px-6 pt-12 pb-16">
+      <main className="relative mx-auto container flex-1 px-6 pt-12 pb-16">
         <div className="pointer-events-none absolute inset-0 -z-10">
           <div className="absolute inset-x-0 top-0 h-64 bg-[radial-gradient(circle_at_top,rgba(56,189,248,0.15),transparent_65%)]" />
           <div className="absolute right-10 top-24 h-32 w-32 rounded-full border border-border/50 bg-muted/30 blur-2xl" />

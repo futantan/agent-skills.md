@@ -126,7 +126,7 @@ export default async function AuthorPage({
       : `/authors/${encodeURIComponent(decodedAuthor)}`;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       <SiteHeader />
 
       <section className="relative mx-auto container px-6 pt-12 pb-6">
@@ -182,7 +182,7 @@ export default async function AuthorPage({
         </div>
       </section>
 
-      <main className="mx-auto container px-6 pb-16">
+      <main className="mx-auto container px-6 pb-16 flex-1 w-full">
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {pagedSkills.map((skill) => (
             <Link
