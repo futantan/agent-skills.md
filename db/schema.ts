@@ -29,6 +29,7 @@ export const reposTable = pgTable(
   },
   (table) => [
     uniqueIndex("repos_owner_name_unique").on(table.owner, table.name),
+    index("repos_stars_idx").on(table.stars),
   ]
 );
 
@@ -51,6 +52,8 @@ export const skillsTable = pgTable(
   },
   (table) => [
     index("skills_category_idx").on(table.category),
+    index("skills_repo_id_idx").on(table.repoId),
+    index("skills_updated_at_idx").on(table.updatedAt),
     index("skills_tags_gin_idx").using("gin", table.tags),
   ]
 );
