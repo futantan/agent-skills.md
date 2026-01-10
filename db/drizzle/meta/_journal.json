@@ -15,6 +15,13 @@
       "when": 1767512448237,
       "tag": "0001_mature_energizer",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1768020669071,
+      "tag": "0002_closed_dorian_gray",
+      "breakpoints": true
     }
   ]
 }
