@@ -1,9 +1,17 @@
 import { db } from "@/db";
 import { reposTable, skillsTable } from "@/db/schema";
 import { env } from "@/env";
-import { buildFileTree, fetchFileContent, fetchRepoTree } from "@/lib/github-files";
+import {
+  buildFileTree,
+  fetchFileContent,
+  fetchRepoTree,
+} from "@/lib/github-files";
 import { submitRepo } from "@/lib/repos";
-import { joinSkillsPath, parseSkillId, resolveSkillsPath } from "@/lib/skill-path";
+import {
+  joinSkillsPath,
+  parseSkillId,
+  resolveSkillsPath,
+} from "@/lib/skill-path";
 import { DEFAULT_PAGE_SIZE } from "@/lib/skills-pagination";
 import { os } from "@orpc/server";
 import { desc, eq, ilike, or, sql, type SQL } from "drizzle-orm";
@@ -42,7 +50,10 @@ async function fetchSkillsPage({
     })
     .from(skillsTable)
     .leftJoin(reposTable, eq(skillsTable.repoId, reposTable.id))
-    .orderBy(desc(skillsTable.updatedAt))
+    .orderBy(
+      desc(sql`coalesce(${reposTable.stars}, 0)`),
+      desc(skillsTable.updatedAt)
+    )
     .limit(pageSize)
     .offset(offset);
 
@@ -135,7 +146,7 @@ const findSkill = os
       .leftJoin(reposTable, eq(skillsTable.repoId, reposTable.id))
       .where(eq(skillsTable.id, input.id))
       .limit(1);
-    return row
+    return row;
   });
 
 const submitRepoHandler = os
@@ -146,7 +157,8 @@ const submitRepoHandler = os
   )
   .handler(async ({ input, context }) => {
     const headers = (context as { headers?: Headers })?.headers;
-    const token = headers?.get("x-github-token") ?? env.GITHUB_TOKEN ?? undefined;
+    const token =
+      headers?.get("x-github-token") ?? env.GITHUB_TOKEN ?? undefined;
     return submitRepo(input.url, token);
   });
 
@@ -159,7 +171,8 @@ const skillTree = os
     }
 
     const headers = (context as { headers?: Headers })?.headers;
-    const token = headers?.get("x-github-token") ?? env.GITHUB_TOKEN ?? undefined;
+    const token =
+      headers?.get("x-github-token") ?? env.GITHUB_TOKEN ?? undefined;
 
     const { owner, repo, skillDir } = params;
     const repoId = `${owner}/${repo}`;
@@ -213,7 +226,8 @@ const skillFile = os
     }
 
     const headers = (context as { headers?: Headers })?.headers;
-    const token = headers?.get("x-github-token") ?? env.GITHUB_TOKEN ?? undefined;
+    const token =
+      headers?.get("x-github-token") ?? env.GITHUB_TOKEN ?? undefined;
 
     const MAX_PREVIEW_BYTES = 512 * 1024;
     const TEXT_EXTENSIONS = new Set([
@@ -257,7 +271,7 @@ const skillFile = os
 
       const name = decodedPath.split("/").pop() ?? decodedPath;
       const extension = name.includes(".")
-        ? name.split(".").pop()?.toLowerCase() ?? ""
+        ? (name.split(".").pop()?.toLowerCase() ?? "")
         : "";
       const isText = !extension || TEXT_EXTENSIONS.has(extension);
 
