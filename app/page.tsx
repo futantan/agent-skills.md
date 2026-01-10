@@ -5,6 +5,26 @@ import { SkillsExplorer } from "@/components/skills-explorer";
 import { client } from "@/lib/api/orpc";
 import { siteConfig } from "@/lib/site-config";
 import { DEFAULT_PAGE_SIZE } from "@/lib/skills-pagination";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: siteConfig.site.title,
+  description: siteConfig.site.description,
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    title: siteConfig.site.title,
+    description: siteConfig.site.description,
+    url: "/",
+    type: "website",
+  },
+  twitter: {
+    card: "summary",
+    title: siteConfig.site.title,
+    description: siteConfig.site.description,
+  },
+};
 
 type SearchParams = Record<string, string | string[] | undefined>;
 type HomeProps = {
