@@ -2,8 +2,10 @@ import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { SkillFilesExplorer } from "@/components/skill-files-explorer";
 import { client } from "@/lib/api/orpc";
+import { getAuthorSlug } from "@/lib/author-utils";
 import { GitFork, Link2, Star } from "lucide-react";
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 
 type SkillDetailPageProps = {
@@ -67,6 +69,11 @@ export default async function SkillDetailPage({
   const repoStars = skill.repoStars ?? 0;
   const repoForks = skill.repoForks ?? 0;
   const showRepoStats = repoStars > 0;
+  const authorSlug = getAuthorSlug({
+    name: skill.authorName,
+    url: skill.authorUrl,
+    avatarUrl: skill.authorAvatarUrl,
+  });
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -120,14 +127,39 @@ export default async function SkillDetailPage({
                 {skill.authorName ? (
                   <div className="mt-3 flex items-start gap-3 sm:mt-4 sm:gap-4">
                     {skill.authorAvatarUrl ? (
-                      <img
-                        alt={skill.authorName}
-                        className="h-10 w-10 rounded-full border border-border/60 object-cover sm:h-14 sm:w-14"
-                        src={skill.authorAvatarUrl}
-                      />
+                      authorSlug ? (
+                        <Link
+                          aria-label={`${skill.authorName} skills`}
+                          href={`/authors/${authorSlug}`}
+                        >
+                          <img
+                            alt={skill.authorName}
+                            className="h-10 w-10 rounded-full border border-border/60 object-cover sm:h-14 sm:w-14"
+                            src={skill.authorAvatarUrl}
+                          />
+                        </Link>
+                      ) : (
+                        <img
+                          alt={skill.authorName}
+                          className="h-10 w-10 rounded-full border border-border/60 object-cover sm:h-14 sm:w-14"
+                          src={skill.authorAvatarUrl}
+                        />
+                      )
                     ) : null}
                     <div>
                       <p className="text-sm font-semibold text-foreground sm:text-base">
+                        {authorSlug ? (
+                          <Link
+                            className="transition-colors hover:text-primary"
+                            href={`/authors/${authorSlug}`}
+                          >
+                            {skill.authorName}
+                          </Link>
+                        ) : (
+                          skill.authorName
+                        )}
+                      </p>
+                      <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground sm:mt-2">
                         {skill.authorUrl ? (
                           <a
                             className="transition-colors hover:text-primary"
@@ -135,17 +167,18 @@ export default async function SkillDetailPage({
                             rel="noopener noreferrer"
                             target="_blank"
                           >
-                            {skill.authorName}
+                            {skill.authorUrl}
                           </a>
-                        ) : (
-                          skill.authorName
-                        )}
-                      </p>
-                      {skill.authorUrl ? (
-                        <p className="mt-1 text-xs text-muted-foreground sm:mt-2">
-                          {skill.authorUrl}
-                        </p>
-                      ) : null}
+                        ) : null}
+                        {authorSlug ? (
+                          <Link
+                            className="font-semibold uppercase tracking-[0.18em] text-foreground transition-colors hover:text-primary"
+                            href={`/authors/${authorSlug}`}
+                          >
+                            View all skills
+                          </Link>
+                        ) : null}
+                      </div>
                     </div>
                   </div>
                 ) : (

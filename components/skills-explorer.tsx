@@ -1,5 +1,6 @@
 "use client";
 
+import { PaginationNav } from "@/components/pagination-nav";
 import { Card } from "@/components/ui/card";
 import {
   InputGroup,
@@ -7,21 +8,9 @@ import {
   InputGroupButton,
   InputGroupInput,
 } from "@/components/ui/input-group";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationEllipsis,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { orpc } from "@/lib/api/orpc";
-import {
-  buildPaginationItems,
-  DEFAULT_PAGE_SIZE,
-} from "@/lib/skills-pagination";
+import { DEFAULT_PAGE_SIZE } from "@/lib/skills-pagination";
 import type { SkillsPage } from "@/lib/types";
 import { useQuery } from "@tanstack/react-query";
 import { GitFork, Loader2, Search, Star, X } from "lucide-react";
@@ -93,11 +82,6 @@ export function SkillsExplorer({
       void setPage(totalPages);
     }
   }, [page, searchQuery.isPlaceholderData, setPage, totalPages]);
-
-  const paginationItems = useMemo(
-    () => buildPaginationItems(currentPage, totalPages),
-    [currentPage, totalPages]
-  );
 
   return (
     <>
@@ -244,45 +228,18 @@ export function SkillsExplorer({
             </TabsContent>
           ))}
         </Tabs>
-        {totalPages > 1 && (
-          <div className="mt-10 flex flex-col items-center gap-4">
-            <p className="text-sm text-muted-foreground">
-              Page {currentPage} of {totalPages} · {pageData.total} results
-            </p>
-            <Pagination>
-              <PaginationContent>
-                <PaginationItem>
-                  <PaginationPrevious
-                    disabled={currentPage <= 1}
-                    onClick={() => void setPage(currentPage - 1)}
-                  />
-                </PaginationItem>
-                {paginationItems.map((item, index) =>
-                  item === "ellipsis" ? (
-                    <PaginationItem key={`ellipsis-${index}`}>
-                      <PaginationEllipsis />
-                    </PaginationItem>
-                  ) : (
-                    <PaginationItem key={item}>
-                      <PaginationLink
-                        isActive={item === currentPage}
-                        onClick={() => void setPage(item)}
-                      >
-                        {item}
-                      </PaginationLink>
-                    </PaginationItem>
-                  )
-                )}
-                <PaginationItem>
-                  <PaginationNext
-                    disabled={currentPage >= totalPages}
-                    onClick={() => void setPage(currentPage + 1)}
-                  />
-                </PaginationItem>
-              </PaginationContent>
-            </Pagination>
-          </div>
-        )}
+        <PaginationNav
+          buildHref={(value) =>
+            value > 1
+              ? `/?page=${value}${activeQuery ? `&q=${encodeURIComponent(activeQuery)}` : ""}`
+              : activeQuery
+                ? `/?q=${encodeURIComponent(activeQuery)}`
+                : "/"
+          }
+          currentPage={currentPage}
+          totalItems={pageData.total}
+          totalPages={totalPages}
+        />
       </main>
     </>
   );
