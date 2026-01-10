@@ -8,9 +8,66 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+type FileNode = {
+  name: string;
+  path: string;
+  type: "file" | "dir";
+  children?: FileNode[];
+};
+
 type SkillDetailPageProps = {
   params: Promise<{ id: string | string[] }>;
 };
+
+async function fetchSkillMarkdown(skillId: string) {
+  try {
+    const tree = (await client.skills.tree({ id: skillId })) as {
+      root: FileNode;
+    };
+    const skillFile = findFileByName(tree.root, "SKILL.md");
+    if (!skillFile) {
+      return null;
+    }
+    const preview = (await client.skills.file({
+      id: skillId,
+      path: skillFile.path,
+    })) as {
+      kind: "text" | "binary" | "too_large";
+      path: string;
+      content?: string;
+    };
+    if (preview.kind !== "text" || !preview.content) {
+      return null;
+    }
+    return {
+      path: preview.path,
+      content: stripFrontmatter(preview.content),
+    };
+  } catch {
+    return null;
+  }
+}
+
+function stripFrontmatter(value: string) {
+  const frontmatterPattern = /^---\s*\n[\s\S]*?\n---\s*\n?/;
+  return value.replace(frontmatterPattern, "");
+}
+
+function findFileByName(node: FileNode, name: string): FileNode | null {
+  if (node.type === "file" && node.name === name) {
+    return node;
+  }
+  if (!node.children?.length) {
+    return null;
+  }
+  for (const child of node.children) {
+    const match = findFileByName(child, name);
+    if (match) {
+      return match;
+    }
+  }
+  return null;
+}
 
 export async function generateMetadata({
   params,
@@ -61,6 +118,8 @@ export default async function SkillDetailPage({
   if (!skill) {
     notFound();
   }
+
+  const markdownPreview = await fetchSkillMarkdown(normalizedId);
 
   const repoLabel =
     skill.repoOwner && skill.repoName
@@ -242,7 +301,21 @@ export default async function SkillDetailPage({
           </div>
         </div>
 
-        <SkillFilesExplorer skillId={skill.id} skillName={skill.name} />
+        <SkillFilesExplorer
+          skillId={skill.id}
+          skillName={skill.name}
+          initialPreview={
+            markdownPreview
+              ? {
+                  kind: "text",
+                  path: markdownPreview.path,
+                  size: markdownPreview.content.length,
+                  content: markdownPreview.content,
+                }
+              : null
+          }
+          initialSelectedPath={markdownPreview?.path ?? null}
+        />
       </main>
 
       <SiteFooter />

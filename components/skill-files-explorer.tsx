@@ -2,7 +2,7 @@
 
 import { client } from "@/lib/api/orpc";
 import { FileText, Folder } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import ReactMarkdown from "react-markdown";
 
 type FileNode = {
@@ -30,11 +30,15 @@ type FilePreview =
 type SkillFilesExplorerProps = {
   skillId: string;
   skillName: string;
+  initialPreview?: FilePreview | null;
+  initialSelectedPath?: string | null;
 };
 
 export function SkillFilesExplorer({
   skillId,
   skillName,
+  initialPreview = null,
+  initialSelectedPath = null,
 }: SkillFilesExplorerProps) {
   const downloadId = skillId
     .split("/")
@@ -43,10 +47,41 @@ export function SkillFilesExplorer({
   const [root, setRoot] = useState<FileNode | null>(null);
   const [treeError, setTreeError] = useState<string | null>(null);
   const [treeLoading, setTreeLoading] = useState(true);
-  const [selectedPath, setSelectedPath] = useState<string | null>(null);
-  const [preview, setPreview] = useState<FilePreview | null>(null);
+  const [selectedPath, setSelectedPath] = useState<string | null>(
+    initialSelectedPath
+  );
+  const [preview, setPreview] = useState<FilePreview | null>(initialPreview);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [previewError, setPreviewError] = useState<string | null>(null);
+
+  const handleSelectFile = useCallback(
+    async (node: FileNode) => {
+      if (node.type !== "file") {
+        return;
+      }
+      setSelectedPath(node.path);
+      setPreview(null);
+      setPreviewLoading(true);
+      setPreviewError(null);
+
+      try {
+        const data = (await client.skills.file({
+          id: skillId,
+          path: node.path,
+        })) as FilePreview;
+        setPreview(data);
+      } catch (error) {
+        const message =
+          error instanceof Error
+            ? error.message
+            : "Unable to load file preview.";
+        setPreviewError(message);
+      } finally {
+        setPreviewLoading(false);
+      }
+    },
+    [skillId]
+  );
 
   useEffect(() => {
     let mounted = true;
@@ -87,31 +122,7 @@ export function SkillFilesExplorer({
     if (skillFile) {
       void handleSelectFile(skillFile);
     }
-  }, [root, selectedPath]);
-
-  const handleSelectFile = async (node: FileNode) => {
-    if (node.type !== "file") {
-      return;
-    }
-    setSelectedPath(node.path);
-    setPreview(null);
-    setPreviewLoading(true);
-    setPreviewError(null);
-
-    try {
-      const data = (await client.skills.file({
-        id: skillId,
-        path: node.path,
-      })) as FilePreview;
-      setPreview(data);
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Unable to load file preview.";
-      setPreviewError(message);
-    } finally {
-      setPreviewLoading(false);
-    }
-  };
+  }, [handleSelectFile, root, selectedPath]);
 
   return (
     <section className="mt-10 rounded-2xl bg-card/40">
