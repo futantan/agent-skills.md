@@ -246,8 +246,16 @@ function FilePreviewPanel({ preview }: { preview: FilePreview }) {
           <span className="truncate">{preview.path}</span>
         </div>
         {isMarkdown ? (
-          <article className="prose prose-neutral max-w-full min-w-0 break-words rounded-2xl border border-border/60 bg-gradient-to-br from-background via-background/80 to-muted/20 p-4 sm:p-5 lg:p-6 shadow-[0_18px_40px_-32px_rgba(0,0,0,0.55)] lg:prose-xl prose-headings:tracking-tight prose-headings:text-foreground prose-h1:text-3xl prose-h2:text-2xl prose-h3:text-xl prose-p:text-foreground/80 prose-a:text-primary prose-a:decoration-primary/40 prose-a:underline-offset-4 hover:prose-a:decoration-primary prose-strong:text-foreground prose-code:break-words prose-code:rounded-md prose-code:bg-muted/60 prose-code:px-1.5 prose-code:py-0.5 prose-code:text-foreground prose-pre:rounded-xl prose-pre:border prose-pre:border-border/60 prose-pre:bg-muted/30 prose-pre:shadow-inner prose-pre:overflow-x-auto prose-blockquote:rounded-r-lg prose-blockquote:border-l-4 prose-blockquote:border-primary/50 prose-blockquote:bg-muted/30 prose-blockquote:px-4 prose-blockquote:py-2 prose-li:marker:text-primary/60 prose-hr:border-border/60 prose-img:max-w-full prose-table:block prose-table:w-full prose-table:overflow-x-auto prose-th:bg-muted/40 prose-td:border-border/50">
-            <ReactMarkdown>{markdownContent}</ReactMarkdown>
+          <article className="prose prose-neutral max-w-full min-w-0 wrap-break-word rounded-2xl border border-border/60 bg-linear-to-br from-background via-background/80 to-muted/20 p-4 sm:p-5 lg:p-6 shadow-[0_18px_40px_-32px_rgba(0,0,0,0.55)] lg:prose-xl prose-headings:tracking-tight prose-headings:text-foreground prose-h1:text-3xl prose-h2:text-2xl prose-h3:text-xl prose-p:text-foreground/80 prose-a:text-primary prose-a:decoration-primary/40 prose-a:underline-offset-4 hover:prose-a:decoration-primary prose-strong:text-foreground prose-code:wrap-break-word prose-code:rounded-md prose-code:bg-muted/60 prose-code:px-1.5 prose-code:py-0.5 prose-code:text-foreground prose-pre:rounded-xl prose-pre:border prose-pre:border-border/60 prose-pre:bg-muted/30 prose-pre:shadow-inner prose-pre:overflow-x-auto prose-blockquote:rounded-r-lg prose-blockquote:border-l-4 prose-blockquote:border-primary/50 prose-blockquote:bg-muted/30 prose-blockquote:px-4 prose-blockquote:py-2 prose-li:marker:text-primary/60 prose-hr:border-border/60 prose-img:max-w-full prose-table:block prose-table:w-full prose-table:overflow-x-auto prose-th:bg-muted/40 prose-td:border-border/50">
+            <ReactMarkdown
+              components={{
+                h1: ({ children, ...props }) => <h2 {...props}>{children}</h2>,
+                h2: ({ children, ...props }) => <h3 {...props}>{children}</h3>,
+                h3: ({ children, ...props }) => <h4 {...props}>{children}</h4>,
+              }}
+            >
+              {markdownContent}
+            </ReactMarkdown>
           </article>
         ) : (
           <pre className="max-h-130 overflow-auto whitespace-pre-wrap wrap-break-word rounded-xl border border-border/40 bg-muted/20 p-4 text-xs leading-relaxed text-foreground">

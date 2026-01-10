@@ -3,7 +3,7 @@ import { SiteHeader } from "@/components/site-header";
 import { SkillFilesExplorer } from "@/components/skill-files-explorer";
 import { client } from "@/lib/api/orpc";
 import { getAuthorSlug } from "@/lib/author-utils";
-import { Github, GitFork, Star } from "lucide-react";
+import { GitFork, Github, Star } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -14,6 +14,9 @@ type FileNode = {
   type: "file" | "dir";
   children?: FileNode[];
 };
+
+export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 type SkillDetailPageProps = {
   params: Promise<{ id: string | string[] }>;
@@ -39,9 +42,11 @@ async function fetchSkillMarkdown(skillId: string) {
     if (preview.kind !== "text" || !preview.content) {
       return null;
     }
+    const content = stripFrontmatter(preview.content);
     return {
       path: preview.path,
-      content: stripFrontmatter(preview.content),
+      content,
+      title: extractMarkdownTitle(content),
     };
   } catch {
     return null;
@@ -51,6 +56,11 @@ async function fetchSkillMarkdown(skillId: string) {
 function stripFrontmatter(value: string) {
   const frontmatterPattern = /^---\s*\n[\s\S]*?\n---\s*\n?/;
   return value.replace(frontmatterPattern, "");
+}
+
+function extractMarkdownTitle(value: string) {
+  const match = value.match(/^#\s+(.+)$/m);
+  return match?.[1]?.trim() ?? null;
 }
 
 function findFileByName(node: FileNode, name: string): FileNode | null {
@@ -76,9 +86,14 @@ export async function generateMetadata({
   const rawId = Array.isArray(id) ? id.join("/") : id;
   const decodedId = decodeURIComponent(rawId);
   const normalizedId = decodedId.replace(/^\/?skills\//, "");
-  const skill = await client.skills.find({ id: normalizedId });
-  const title = skill?.name
-    ? `${skill.name} Skill | Agent Skills`
+  const [skill, markdownPreview] = await Promise.all([
+    client.skills.find({ id: normalizedId }),
+    fetchSkillMarkdown(normalizedId),
+  ]);
+  const displayTitle =
+    markdownPreview?.title ?? skill?.name ?? normalizedId.replace(/[-_]/g, " ");
+  const title = displayTitle
+    ? `${displayTitle} Skill | Agent Skills`
     : "Agent Skills";
   const description =
     skill?.description ??
@@ -120,6 +135,8 @@ export default async function SkillDetailPage({
   }
 
   const markdownPreview = await fetchSkillMarkdown(normalizedId);
+  const displayTitle =
+    markdownPreview?.title ?? skill.name ?? normalizedId.replace(/[-_]/g, " ");
 
   const repoLabel =
     skill.repoOwner && skill.repoName
@@ -143,11 +160,8 @@ export default async function SkillDetailPage({
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(100%_100%_at_0%_0%,rgba(56,189,248,0.12),transparent_55%)]" />
           <div className="relative grid gap-6 sm:gap-8 lg:grid-cols-[1.3fr_0.7fr]">
             <div>
-              <p className="mb-2 text-[11px] uppercase tracking-[0.3em] text-muted-foreground sm:mb-3 sm:text-xs">
-                Agent Skill Detail
-              </p>
               <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-5xl">
-                {skill.name}
+                Agent Skills: {displayTitle}
               </h1>
               <p className="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground sm:mt-4 sm:text-base sm:leading-7">
                 {skill.description}
