@@ -8,8 +8,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-export const dynamic = "force-dynamic";
-export const revalidate = 60;
+export const revalidate = 60 * 60 * 24; // 1 day
 
 type SkillDetailPageProps = {
   params: Promise<{ id: string | string[] }>;
