@@ -8,13 +8,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-type FileNode = {
-  name: string;
-  path: string;
-  type: "file" | "dir";
-  children?: FileNode[];
-};
-
 export const dynamic = "force-dynamic";
 export const revalidate = 60;
 
@@ -23,34 +16,19 @@ type SkillDetailPageProps = {
 };
 
 async function fetchSkillMarkdown(skillId: string) {
-  try {
-    const tree = (await client.skills.tree({ id: skillId })) as {
-      root: FileNode;
-    };
-    const skillFile = findFileByName(tree.root, "SKILL.md");
-    if (!skillFile) {
-      return null;
-    }
-    const preview = (await client.skills.file({
-      id: skillId,
-      path: skillFile.path,
-    })) as {
-      kind: "text" | "binary" | "too_large";
-      path: string;
-      content?: string;
-    };
-    if (preview.kind !== "text" || !preview.content) {
-      return null;
-    }
-    const content = stripFrontmatter(preview.content);
-    return {
-      path: preview.path,
-      content,
-      title: extractMarkdownTitle(content),
-    };
-  } catch {
+  const preview = (await client.skills.markdown({ id: skillId })) as {
+    path: string;
+    content: string;
+  } | null;
+  if (!preview?.content) {
     return null;
   }
+  const content = stripFrontmatter(preview.content);
+  return {
+    path: preview.path,
+    content,
+    title: extractMarkdownTitle(content),
+  };
 }
 
 function stripFrontmatter(value: string) {
@@ -61,22 +39,6 @@ function stripFrontmatter(value: string) {
 function extractMarkdownTitle(value: string) {
   const match = value.match(/^#\s+(.+)$/m);
   return match?.[1]?.trim() ?? null;
-}
-
-function findFileByName(node: FileNode, name: string): FileNode | null {
-  if (node.type === "file" && node.name === name) {
-    return node;
-  }
-  if (!node.children?.length) {
-    return null;
-  }
-  for (const child of node.children) {
-    const match = findFileByName(child, name);
-    if (match) {
-      return match;
-    }
-  }
-  return null;
 }
 
 export async function generateMetadata({

@@ -64,7 +64,7 @@ export async function fetchFileContent(
   repo: string,
   path: string,
   token?: string
-): Promise<{ content?: string; encoding?: string; size: number; type: string }> {
+): Promise<{ content?: string; encoding?: string; size: number; type: string; }> {
   const headers = token ? { Authorization: `Bearer ${token}` } : undefined;
   return getJson(
     `${API_BASE}/repos/${owner}/${repo}/contents/${path}`,
@@ -165,10 +165,13 @@ async function getJson<T>(url: string, headers?: Record<string, string>) {
       "User-Agent": "agent-skills",
       ...headers,
     },
+    next: {
+      revalidate: 3600,
+    },
   });
   if (!response.ok) {
     const errorBody = await response.text();
-    console.error('GitHub API request failed:', {
+    console.error("GitHub API request failed:", {
       url,
       status: response.status,
       statusText: response.statusText,
