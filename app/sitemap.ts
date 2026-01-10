@@ -8,6 +8,12 @@ export const revalidate = 3600;
 
 const BASE_URL = "https://agent-skills.md";
 
+const encodePathSegments = (value: string) =>
+  value
+    .split("/")
+    .map((segment) => encodeURIComponent(segment))
+    .join("/");
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const rows = await db
     .select({
@@ -37,14 +43,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }
 
   const skillEntries: MetadataRoute.Sitemap = rows.map((row) => ({
-    url: `${BASE_URL}/skills/${row.id}`,
+    url: `${BASE_URL}/skills/${encodePathSegments(row.id)}`,
     lastModified: row.updatedAt ?? new Date(),
   }));
 
   const authorEntries: MetadataRoute.Sitemap = Array.from(
     authorMap.entries()
   ).map(([slug, updatedAt]) => ({
-    url: `${BASE_URL}/authors/${slug}`,
+    url: `${BASE_URL}/authors/${encodeURIComponent(slug)}`,
     lastModified: updatedAt,
   }));
 
