@@ -47,6 +47,8 @@ export const skillsTable = pgTable(
     authorName: varchar({ length: 128 }),
     authorUrl: varchar({ length: 512 }),
     authorAvatarUrl: varchar({ length: 512 }),
+    // Normalized author slug for indexed lookups (computed on insert/update)
+    authorSlug: varchar({ length: 128 }),
     createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
   },
@@ -55,5 +57,10 @@ export const skillsTable = pgTable(
     index("skills_repo_id_idx").on(table.repoId),
     index("skills_updated_at_idx").on(table.updatedAt),
     index("skills_tags_gin_idx").using("gin", table.tags),
+    // Index for author slug lookups - eliminates full table scans
+    index("skills_author_slug_idx").on(table.authorSlug),
+    // Index for name searches - partial optimization for LIKE 'prefix%'
+    index("skills_name_idx").on(table.name),
   ]
 );
+

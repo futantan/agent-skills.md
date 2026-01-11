@@ -30,13 +30,8 @@ const authorInput = z.object({
 const authorPaginationInput = authorInput.merge(paginationInput);
 
 const buildAuthorMatch = (normalizedAuthor: string) => {
-  const authorNameSlug = sql<string>`trim(both '-' from regexp_replace(lower(coalesce(${skillsTable.authorName}, '')), '[^a-z0-9]+', '-', 'g'))`;
-  const authorUrlSlug = sql<string>`case when lower(split_part(regexp_replace(coalesce(${skillsTable.authorUrl}, ''), '^https?://', ''), '/', 1)) in ('github.com', 'www.github.com') then lower(split_part(regexp_replace(coalesce(${skillsTable.authorUrl}, ''), '^https?://', ''), '/', 2)) else null end`;
-
-  return or(
-    sql`${authorNameSlug} = ${normalizedAuthor}`,
-    sql`${authorUrlSlug} = ${normalizedAuthor}`
-  );
+  // Use indexed authorSlug column for efficient lookups
+  return eq(skillsTable.authorSlug, normalizedAuthor);
 };
 
 async function fetchSkillsPage({

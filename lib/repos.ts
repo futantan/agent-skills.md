@@ -1,5 +1,6 @@
 import { db } from "@/db";
 import { reposTable, skillsTable } from "@/db/schema";
+import { getAuthorSlug } from "@/lib/author-utils";
 import { fetchSkillsFromRepo, parseGitHubRepo } from "@/lib/skills-parser";
 import { and, eq } from "drizzle-orm";
 
@@ -118,6 +119,12 @@ export async function submitRepo(
           authorName: skill.author?.name,
           authorUrl: skill.author?.url,
           authorAvatarUrl: skill.author?.avatarUrl,
+          // Compute and store normalized author slug for indexed lookups
+          authorSlug: getAuthorSlug({
+            name: skill.author?.name,
+            url: skill.author?.url,
+            avatarUrl: skill.author?.avatarUrl,
+          }),
           updatedAt: new Date(),
         }))
       );
