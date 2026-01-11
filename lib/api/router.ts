@@ -165,14 +165,11 @@ const authorSummary = os.input(authorInput).handler(async ({ input }) => {
   const normalizedAuthor = input.author.trim().toLowerCase();
   const authorMatch = buildAuthorMatch(normalizedAuthor);
 
-  console.time("author-summary count");
   const [{ count }] = await db
     .select({ count: sql<number>`count(*)` })
     .from(skillsTable)
     .where(authorMatch);
-  console.timeEnd("author-summary count");
 
-  console.time("author-summary sample");
   const [sample] = await db
     .select({
       authorName: skillsTable.authorName,
@@ -182,7 +179,6 @@ const authorSummary = os.input(authorInput).handler(async ({ input }) => {
     .from(skillsTable)
     .where(authorMatch)
     .limit(1);
-  console.timeEnd("author-summary sample");
 
   const totalCount = Number(count ?? 0);
   const displayName =
@@ -208,7 +204,6 @@ const authorSkills = os
     const authorMatch = buildAuthorMatch(normalizedAuthor);
     const offset = (input.page - 1) * input.pageSize;
 
-    console.time("author-page list");
     const items = await db
       .select({
         id: skillsTable.id,
@@ -224,7 +219,6 @@ const authorSkills = os
       .where(authorMatch)
       .limit(input.pageSize)
       .offset(offset);
-    console.timeEnd("author-page list");
 
     return { items, page: input.page, pageSize: input.pageSize };
   });
