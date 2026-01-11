@@ -1,9 +1,7 @@
 import { PaginationNav } from "@/components/pagination-nav";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
-import { db } from "@/db";
-import { skillsTable } from "@/db/schema";
-import { getAuthorDisplayName, isAuthorMatch } from "@/lib/author-utils";
+import { client } from "@/lib/api/orpc";
 import { DEFAULT_PAGE_SIZE } from "@/lib/skills-pagination";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -21,30 +19,10 @@ export async function generateMetadata({
 }: AuthorPageProps): Promise<Metadata> {
   const { author } = await params;
   const decodedAuthor = decodeURIComponent(author);
-  const rows = await db
-    .select({
-      authorName: skillsTable.authorName,
-      authorUrl: skillsTable.authorUrl,
-      authorAvatarUrl: skillsTable.authorAvatarUrl,
-    })
-    .from(skillsTable);
-  const skills = rows.filter((row) =>
-    isAuthorMatch(
-      {
-        name: row.authorName,
-        url: row.authorUrl,
-        avatarUrl: row.authorAvatarUrl,
-      },
-      decodedAuthor
-    )
-  );
-  const displayName =
-    getAuthorDisplayName({
-      name: skills[0]?.authorName ?? decodedAuthor,
-      url: skills[0]?.authorUrl ?? undefined,
-    }) ?? decodedAuthor;
-  const description = skills.length
-    ? `Explore ${skills.length} Agent Skills shared by ${displayName}.`
+  const summary = await client.authors.summary({ author: decodedAuthor });
+  const displayName = summary.displayName ?? decodedAuthor;
+  const description = summary.totalCount
+    ? `Explore ${summary.totalCount} Agent Skills shared by ${displayName}.`
     : "Discover production-ready AI skills shared by the community.";
 
   return {
@@ -80,45 +58,23 @@ export default async function AuthorPage({
       : "";
   const parsedPage = Number.parseInt(pageParam, 10);
   const page = Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : 1;
-  const rows = await db
-    .select({
-      id: skillsTable.id,
-      name: skillsTable.name,
-      description: skillsTable.description,
-      category: skillsTable.category,
-      tags: skillsTable.tags,
-      authorName: skillsTable.authorName,
-      authorUrl: skillsTable.authorUrl,
-      authorAvatarUrl: skillsTable.authorAvatarUrl,
-    })
-    .from(skillsTable);
-  const skills = rows.filter((row) =>
-    isAuthorMatch(
-      {
-        name: row.authorName,
-        url: row.authorUrl,
-        avatarUrl: row.authorAvatarUrl,
-      },
-      decodedAuthor
-    )
-  );
 
-  if (skills.length === 0) {
+  const summary = await client.authors.summary({ author: decodedAuthor });
+
+  if (!summary.totalCount) {
     notFound();
   }
 
-  const totalPages = Math.max(1, Math.ceil(skills.length / DEFAULT_PAGE_SIZE));
+  const totalPages = Math.max(
+    1,
+    Math.ceil(summary.totalCount / DEFAULT_PAGE_SIZE)
+  );
   const currentPage = Math.min(page, totalPages);
-  const startIndex = (currentPage - 1) * DEFAULT_PAGE_SIZE;
-  const pagedSkills = skills.slice(startIndex, startIndex + DEFAULT_PAGE_SIZE);
-  const displayName =
-    getAuthorDisplayName({
-      name: skills[0]?.authorName ?? decodedAuthor,
-      url: skills[0]?.authorUrl ?? undefined,
-    }) ?? decodedAuthor;
-  const authorUrl = skills[0]?.authorUrl ?? null;
-  const authorAvatarUrl = skills[0]?.authorAvatarUrl ?? null;
-  const shareUrl = `/authors/${decodedAuthor}`;
+  const skillsPage = await client.authors.skills({
+    author: decodedAuthor,
+    page: currentPage,
+    pageSize: DEFAULT_PAGE_SIZE,
+  });
   const buildPageHref = (value: number) =>
     value > 1
       ? `/authors/${encodeURIComponent(decodedAuthor)}?page=${value}`
@@ -144,27 +100,27 @@ export default async function AuthorPage({
               Back to authors
             </Link>
             <div className="mt-6 flex items-center gap-4">
-              {authorAvatarUrl ? (
+              {summary.authorAvatarUrl ? (
                 <img
-                  alt={displayName}
+                  alt={summary.displayName}
                   className="h-16 w-16 rounded-full border border-border/60 object-cover sm:h-20 sm:w-20"
-                  src={authorAvatarUrl}
+                  src={summary.authorAvatarUrl}
                 />
               ) : (
                 <div className="flex h-16 w-16 items-center justify-center rounded-full border border-border/60 bg-muted text-base font-semibold text-foreground sm:h-20 sm:w-20">
-                  {displayName.slice(0, 2).toUpperCase()}
+                  {summary.displayName.slice(0, 2).toUpperCase()}
                 </div>
               )}
               <div>
                 <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-5xl">
-                  {displayName}
+                  {summary.displayName}
                 </h1>
                 <p className="mt-2 text-sm text-muted-foreground sm:text-base">
-                  {skills.length} Skills published on{" "}
-                  {authorUrl ? (
+                  {summary.totalCount} Skills published on{" "}
+                  {summary.authorUrl ? (
                     <a
                       className="font-semibold text-foreground transition hover:text-primary"
-                      href={authorUrl}
+                      href={summary.authorUrl}
                       rel="noopener noreferrer"
                       target="_blank"
                     >
@@ -183,7 +139,7 @@ export default async function AuthorPage({
 
       <main className="mx-auto container px-6 pb-16 flex-1 w-full">
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {pagedSkills.map((skill) => (
+          {skillsPage.items.map((skill) => (
             <Link
               key={skill.id}
               className="group relative h-full overflow-hidden rounded-2xl border border-border/40 bg-card/50 p-5 shadow-lg shadow-primary/5 transition hover:border-primary/40 hover:bg-card"
@@ -220,7 +176,7 @@ export default async function AuthorPage({
         <PaginationNav
           buildHref={buildPageHref}
           currentPage={currentPage}
-          totalItems={skills.length}
+          totalItems={summary.totalCount}
           totalPages={totalPages}
         />
       </main>

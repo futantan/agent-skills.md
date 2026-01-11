@@ -1,6 +1,7 @@
 import { db } from "@/db";
 import { reposTable, skillsTable } from "@/db/schema";
 import { env } from "@/env";
+import { getAuthorDisplayName } from "@/lib/author-utils";
 import {
   buildFileTree,
   fetchFileContent,
@@ -21,6 +22,22 @@ const paginationInput = z.object({
   page: z.number().int().min(1).default(1),
   pageSize: z.number().int().min(1).max(60).default(DEFAULT_PAGE_SIZE),
 });
+
+const authorInput = z.object({
+  author: z.string().min(1),
+});
+
+const authorPaginationInput = authorInput.merge(paginationInput);
+
+const buildAuthorMatch = (normalizedAuthor: string) => {
+  const authorNameSlug = sql<string>`trim(both '-' from regexp_replace(lower(coalesce(${skillsTable.authorName}, '')), '[^a-z0-9]+', '-', 'g'))`;
+  const authorUrlSlug = sql<string>`case when lower(split_part(regexp_replace(coalesce(${skillsTable.authorUrl}, ''), '^https?://', ''), '/', 1)) in ('github.com', 'www.github.com') then lower(split_part(regexp_replace(coalesce(${skillsTable.authorUrl}, ''), '^https?://', ''), '/', 2)) else null end`;
+
+  return or(
+    sql`${authorNameSlug} = ${normalizedAuthor}`,
+    sql`${authorUrlSlug} = ${normalizedAuthor}`
+  );
+};
 
 async function fetchSkillsPage({
   where,
@@ -147,6 +164,74 @@ const findSkill = os
       .where(eq(skillsTable.id, input.id))
       .limit(1);
     return row;
+  });
+
+const authorSummary = os.input(authorInput).handler(async ({ input }) => {
+  const normalizedAuthor = input.author.trim().toLowerCase();
+  const authorMatch = buildAuthorMatch(normalizedAuthor);
+
+  console.time("author-summary count");
+  const [{ count }] = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(skillsTable)
+    .where(authorMatch);
+  console.timeEnd("author-summary count");
+
+  console.time("author-summary sample");
+  const [sample] = await db
+    .select({
+      authorName: skillsTable.authorName,
+      authorUrl: skillsTable.authorUrl,
+      authorAvatarUrl: skillsTable.authorAvatarUrl,
+    })
+    .from(skillsTable)
+    .where(authorMatch)
+    .limit(1);
+  console.timeEnd("author-summary sample");
+
+  const totalCount = Number(count ?? 0);
+  const displayName =
+    getAuthorDisplayName({
+      name: sample?.authorName ?? input.author,
+      url: sample?.authorUrl ?? undefined,
+    }) ?? input.author;
+
+  console.info("[author-summary] count", totalCount);
+
+  return {
+    totalCount,
+    displayName,
+    authorUrl: sample?.authorUrl ?? null,
+    authorAvatarUrl: sample?.authorAvatarUrl ?? null,
+  };
+});
+
+const authorSkills = os
+  .input(authorPaginationInput)
+  .handler(async ({ input }) => {
+    const normalizedAuthor = input.author.trim().toLowerCase();
+    const authorMatch = buildAuthorMatch(normalizedAuthor);
+    const offset = (input.page - 1) * input.pageSize;
+
+    console.time("author-page list");
+    const items = await db
+      .select({
+        id: skillsTable.id,
+        name: skillsTable.name,
+        description: skillsTable.description,
+        category: skillsTable.category,
+        tags: skillsTable.tags,
+        authorName: skillsTable.authorName,
+        authorUrl: skillsTable.authorUrl,
+        authorAvatarUrl: skillsTable.authorAvatarUrl,
+      })
+      .from(skillsTable)
+      .where(authorMatch)
+      .limit(input.pageSize)
+      .offset(offset);
+    console.timeEnd("author-page list");
+
+    return { items, page: input.page, pageSize: input.pageSize };
   });
 
 const submitRepoHandler = os
@@ -359,6 +444,10 @@ export const router = {
     tree: skillTree,
     file: skillFile,
     markdown: skillMarkdown,
+  },
+  authors: {
+    summary: authorSummary,
+    skills: authorSkills,
   },
   repos: {
     submit: submitRepoHandler,
