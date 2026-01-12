@@ -1,4 +1,5 @@
 import { FaqSection } from "@/components/faq-section";
+import { LogoCarouselSection } from "@/components/logo-carousel-section";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { SkillsExplorer } from "@/components/skills-explorer";
@@ -94,6 +95,8 @@ export default async function Home({ searchParams }: HomeProps) {
         </div>
 
         <SkillsExplorer initialPage={skillsPage} initialQuery={query} />
+
+        <LogoCarouselSection />
 
         <section className="relative border-y border-border/60 bg-muted/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
           <FaqSection />
