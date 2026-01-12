@@ -41,3 +41,11 @@
 
 - Define required environment variables in `.env` and validate them in `env.ts`.
 - Avoid committing secrets; use `.env.local` for machine-specific overrides.
+
+## Agent Workflow Guidelines
+
+- Use a functional programming mindset where practical.
+- Prefer very small, incremental changes and tasking (e.g., renaming, moving, changing an interface).
+- Each commit should be obviously safe to reviewers without running code.
+- Prefer Language Server Protocol (LSP)-powered rename for refactors.
+- For UI work, use the `frontend-design` skill.
