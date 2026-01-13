@@ -27,11 +27,18 @@ type FilePreview =
       maxBytes?: number;
     };
 
+type SkillFrontmatter = {
+  name?: string;
+  description?: string;
+  license?: string;
+};
+
 type SkillFilesExplorerProps = {
   skillId: string;
   skillName: string;
   initialPreview?: FilePreview | null;
   initialSelectedPath?: string | null;
+  initialFrontmatter?: SkillFrontmatter | null;
 };
 
 export function SkillFilesExplorer({
@@ -39,6 +46,7 @@ export function SkillFilesExplorer({
   skillName,
   initialPreview = null,
   initialSelectedPath = null,
+  initialFrontmatter = null,
 }: SkillFilesExplorerProps) {
   const downloadId = skillId
     .split("/")
@@ -169,7 +177,10 @@ export function SkillFilesExplorer({
           ) : previewError ? (
             <p className="text-sm text-destructive">{previewError}</p>
           ) : preview ? (
-            <FilePreviewPanel preview={preview} />
+            <FilePreviewPanel
+              preview={preview}
+              frontmatter={initialFrontmatter}
+            />
           ) : (
             <p className="text-sm text-muted-foreground">
               Select a file to preview its contents.
@@ -232,12 +243,24 @@ function TreeNode({ node, depth, onSelect, selectedPath }: TreeNodeProps) {
   );
 }
 
-function FilePreviewPanel({ preview }: { preview: FilePreview }) {
+function FilePreviewPanel({
+  preview,
+  frontmatter,
+}: {
+  preview: FilePreview;
+  frontmatter?: SkillFrontmatter | null;
+}) {
   if (preview.kind === "text") {
     const isMarkdown = preview.path.toLowerCase().endsWith(".md");
+    const isSkillMd = preview.path.toLowerCase().endsWith("skill.md");
     const markdownContent = isMarkdown
       ? stripFrontmatter(preview.content)
       : preview.content;
+
+    const hasFrontmatter =
+      isSkillMd &&
+      frontmatter &&
+      (frontmatter.name || frontmatter.description || frontmatter.license);
 
     return (
       <div>
@@ -245,6 +268,38 @@ function FilePreviewPanel({ preview }: { preview: FilePreview }) {
           <span className="inline-block h-1.5 w-1.5 rounded-full bg-primary/60" />
           <span className="truncate">{preview.path}</span>
         </div>
+
+        {hasFrontmatter ? (
+          <div className="mb-4 rounded-xl border border-border/50 bg-muted/20 p-4 sm:p-5">
+            <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+              Skill Metadata
+            </p>
+            <dl className="grid gap-3 text-sm sm:grid-cols-2 lg:grid-cols-3">
+              {frontmatter.name ? (
+                <div>
+                  <dt className="text-xs font-medium text-muted-foreground">
+                    Name
+                  </dt>
+                  <dd className="mt-1 font-semibold text-foreground">
+                    {frontmatter.name}
+                  </dd>
+                </div>
+              ) : null}
+
+              {frontmatter.description ? (
+                <div className="sm:col-span-2 lg:col-span-3">
+                  <dt className="text-xs font-medium text-muted-foreground">
+                    Description
+                  </dt>
+                  <dd className="mt-1 text-foreground/90">
+                    {frontmatter.description}
+                  </dd>
+                </div>
+              ) : null}
+            </dl>
+          </div>
+        ) : null}
+
         {isMarkdown ? (
           <article className="prose prose-neutral max-w-full min-w-0 wrap-break-word rounded-2xl border border-border/60 bg-linear-to-br from-background via-background/80 to-muted/20 p-4 sm:p-5 lg:p-6 shadow-[0_18px_40px_-32px_rgba(0,0,0,0.55)] lg:prose-xl prose-headings:tracking-tight prose-headings:text-foreground prose-h1:text-3xl prose-h2:text-2xl prose-h3:text-xl prose-p:text-foreground/80 prose-a:text-primary prose-a:decoration-primary/40 prose-a:underline-offset-4 hover:prose-a:decoration-primary prose-strong:text-foreground prose-code:wrap-break-word prose-code:rounded-md prose-code:bg-muted/60 prose-code:px-1.5 prose-code:py-0.5 prose-code:text-foreground prose-pre:rounded-xl prose-pre:border prose-pre:border-border/60 prose-pre:bg-muted/30 prose-pre:shadow-inner prose-pre:overflow-x-auto prose-blockquote:rounded-r-lg prose-blockquote:border-l-4 prose-blockquote:border-primary/50 prose-blockquote:bg-muted/30 prose-blockquote:px-4 prose-blockquote:py-2 prose-li:marker:text-primary/60 prose-hr:border-border/60 prose-img:max-w-full prose-table:block prose-table:w-full prose-table:overflow-x-auto prose-th:bg-muted/40 prose-td:border-border/50">
             <ReactMarkdown

@@ -22,17 +22,48 @@ async function fetchSkillMarkdown(skillId: string) {
   if (!preview?.content) {
     return null;
   }
-  const content = stripFrontmatter(preview.content);
+  const { frontmatter, content } = parseFrontmatter(preview.content);
   return {
     path: preview.path,
     content,
     title: extractMarkdownTitle(content),
+    frontmatter,
   };
 }
 
-function stripFrontmatter(value: string) {
-  const frontmatterPattern = /^---\s*\n[\s\S]*?\n---\s*\n?/;
-  return value.replace(frontmatterPattern, "");
+type SkillFrontmatter = {
+  name?: string;
+  description?: string;
+  license?: string;
+};
+
+function parseFrontmatter(value: string): {
+  frontmatter: SkillFrontmatter;
+  content: string;
+} {
+  const frontmatterPattern = /^---\s*\n([\s\S]*?)\n---\s*\n?/;
+  const match = value.match(frontmatterPattern);
+
+  if (!match) {
+    return { frontmatter: {}, content: value };
+  }
+
+  const yamlContent = match[1];
+  const content = value.replace(frontmatterPattern, "");
+  const frontmatter: SkillFrontmatter = {};
+
+  for (const line of yamlContent.split("\n")) {
+    const colonIndex = line.indexOf(":");
+    if (colonIndex === -1) continue;
+
+    const key = line.slice(0, colonIndex).trim();
+    const val = line.slice(colonIndex + 1).trim();
+
+    if (key === "name") frontmatter.name = val;
+    else if (key === "description") frontmatter.description = val;
+  }
+
+  return { frontmatter, content };
 }
 
 function extractMarkdownTitle(value: string) {
@@ -290,6 +321,7 @@ export default async function SkillDetailPage({
               : null
           }
           initialSelectedPath={markdownPreview?.path ?? null}
+          initialFrontmatter={markdownPreview?.frontmatter ?? null}
         />
       </main>
 
