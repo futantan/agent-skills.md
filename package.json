@@ -16,6 +16,7 @@
     "db:migrate": "npx drizzle-kit migrate"
   },
   "dependencies": {
+    "@ai-sdk/openai": "^3.0.9",
     "@base-ui/react": "^1.0.0",
     "@orpc/client": "^1.13.2",
     "@orpc/server": "^1.13.2",
@@ -23,6 +24,7 @@
     "@t3-oss/env-nextjs": "^0.13.10",
     "@tailwindcss/typography": "^0.5.19",
     "@tanstack/react-query": "^5.90.16",
+    "ai": "^6.0.33",
     "archiver": "^7.0.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
