@@ -167,7 +167,7 @@ export function SkillsExplorer({
                           </div>
 
                           {skill.tags.length > 0 && (
-                            <div className="mb-4 flex flex-wrap gap-2">
+                            <div className="mb-4 flex max-h-16 flex-wrap gap-2 overflow-hidden">
                               {skill.tags.map((tag: string) => (
                                 <span
                                   key={tag}
