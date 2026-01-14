@@ -9,10 +9,17 @@
 
 import { db } from "@/db";
 import { skillsTable } from "@/db/schema";
-import { generateSkillMetadata } from "@/lib/ai/generate-skill-metadata";
+import {
+  ExistingTaxonomy,
+  generateSkillMetadata,
+} from "@/lib/ai/generate-skill-metadata";
 import { fetchExistingTaxonomy } from "@/lib/ai/taxonomy";
 import { eq, isNull, or, sql } from "drizzle-orm";
 import { NextResponse } from "next/server";
+
+// ============================================================================
+// Types
+// ============================================================================
 
 type SkillRow = {
   id: string;
@@ -21,6 +28,29 @@ type SkillRow = {
   category: string | null;
   tags: string[];
 };
+
+type ResultItem = {
+  skill: {
+    id: string;
+    name: string;
+    description: string;
+    currentCategory?: string | null;
+    currentTags?: string[];
+  };
+  generated: { category: string; tags: string[] } | null;
+  status: "success" | "error";
+  error?: string;
+};
+
+// ============================================================================
+// Constants
+// ============================================================================
+
+const CONCURRENCY = 100;
+
+// ============================================================================
+// Database Operations
+// ============================================================================
 
 async function findSkillsMissingMetadata(): Promise<SkillRow[]> {
   return db
@@ -50,12 +80,139 @@ async function updateSkillMetadata(
 ): Promise<void> {
   await db
     .update(skillsTable)
-    .set({
-      category,
-      tags,
-    })
+    .set({ category, tags })
     .where(eq(skillsTable.id, skillId));
 }
+
+// ============================================================================
+// Processing Functions
+// ============================================================================
+
+async function processSkill(
+  skill: SkillRow,
+  taxonomy: ExistingTaxonomy
+): Promise<ResultItem> {
+  console.log(`🤖 Processing: ${skill.name}`);
+  try {
+    const generated = await generateSkillMetadata(
+      { name: skill.name, description: skill.description },
+      taxonomy
+    );
+
+    console.log(
+      `   → ${skill.name}: ${generated.category} [${generated.tags.join(", ")}]`
+    );
+
+    await updateSkillMetadata(skill.id, generated.category, generated.tags);
+
+    return {
+      skill: {
+        id: skill.id,
+        name: skill.name,
+        description: skill.description,
+        currentCategory: skill.category,
+        currentTags: skill.tags,
+      },
+      generated: {
+        category: generated.category,
+        tags: generated.tags,
+      },
+      status: "success",
+    };
+  } catch (error) {
+    console.error(`   ❌ ${skill.name}: ${error}`);
+    return {
+      skill: {
+        id: skill.id,
+        name: skill.name,
+        description: skill.description,
+      },
+      generated: null,
+      status: "error",
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+}
+
+async function processSkillsInBatches(
+  skills: SkillRow[],
+  taxonomy: ExistingTaxonomy
+): Promise<{ results: ResultItem[]; successCount: number; errorCount: number }> {
+  const results: ResultItem[] = [];
+  let successCount = 0;
+  let errorCount = 0;
+
+  const totalBatches = Math.ceil(skills.length / CONCURRENCY);
+
+  for (let i = 0; i < skills.length; i += CONCURRENCY) {
+    const batch = skills.slice(i, i + CONCURRENCY);
+    const batchNumber = Math.floor(i / CONCURRENCY) + 1;
+
+    console.log(
+      `\n📦 Processing batch ${batchNumber}/${totalBatches} (${batch.length} skills)`
+    );
+
+    const batchResults = await Promise.all(
+      batch.map((skill) => processSkill(skill, taxonomy))
+    );
+
+    for (const result of batchResults) {
+      results.push(result);
+      if (result.status === "success") {
+        successCount++;
+      } else {
+        errorCount++;
+      }
+    }
+  }
+
+  return { results, successCount, errorCount };
+}
+
+// ============================================================================
+// Response Builders
+// ============================================================================
+
+function buildEmptyResponse(taxonomy: ExistingTaxonomy) {
+  return NextResponse.json({
+    message: "No skills need backfilling",
+    taxonomy: {
+      categoriesCount: taxonomy.categories.length,
+      tagsCount: taxonomy.tags.length,
+    },
+    results: [],
+    stats: { total: 0, success: 0, error: 0 },
+  });
+}
+
+function buildSuccessResponse(
+  taxonomy: ExistingTaxonomy,
+  results: ResultItem[],
+  stats: { total: number; success: number; error: number }
+) {
+  return NextResponse.json({
+    message: `Backfill completed. ${stats.success} skills updated, ${stats.error} errors.`,
+    taxonomy: {
+      categoriesCount: taxonomy.categories.length,
+      tagsCount: taxonomy.tags.length,
+      sampleCategories: taxonomy.categories.slice(0, 10),
+    },
+    stats,
+    results,
+  });
+}
+
+function buildErrorResponse(error: unknown) {
+  console.error("Backfill error:", error);
+  return NextResponse.json(
+    { error: error instanceof Error ? error.message : "Unknown error" },
+    { status: 500 }
+  );
+}
+
+// ============================================================================
+// API Handler
+// ============================================================================
 
 export async function GET() {
   try {
@@ -66,94 +223,24 @@ export async function GET() {
     );
 
     console.log("🔍 Finding all skills missing metadata...");
-    const skills = (await findSkillsMissingMetadata()).slice(0, 10);
+    const skills = await findSkillsMissingMetadata();
     console.log(`   Found ${skills.length} skills to process`);
 
     if (skills.length === 0) {
-      return NextResponse.json({
-        message: "No skills need backfilling",
-        taxonomy: {
-          categoriesCount: taxonomy.categories.length,
-          tagsCount: taxonomy.tags.length,
-        },
-        results: [],
-        stats: {
-          total: 0,
-          success: 0,
-          error: 0,
-        },
-      });
+      return buildEmptyResponse(taxonomy);
     }
 
-    const results = [];
-    let successCount = 0;
-    let errorCount = 0;
+    const { results, successCount, errorCount } = await processSkillsInBatches(
+      skills,
+      taxonomy
+    );
 
-    for (const skill of skills) {
-      console.log(`\n🤖 Processing: ${skill.name}`);
-      try {
-        const generated = await generateSkillMetadata(
-          { name: skill.name, description: skill.description },
-          taxonomy
-        );
-
-        console.log(`   → Category: ${generated.category}`);
-        console.log(`   → Tags: [${generated.tags.join(", ")}]`);
-
-        // Update database
-        await updateSkillMetadata(skill.id, generated.category, generated.tags);
-        console.log(`   ✅ Database updated`);
-
-        successCount++;
-        results.push({
-          skill: {
-            id: skill.id,
-            name: skill.name,
-            description: skill.description,
-            currentCategory: skill.category,
-            currentTags: skill.tags,
-          },
-          generated: {
-            category: generated.category,
-            tags: generated.tags,
-          },
-          status: "success",
-        });
-      } catch (error) {
-        console.error(`   ❌ Error: ${error}`);
-        errorCount++;
-        results.push({
-          skill: {
-            id: skill.id,
-            name: skill.name,
-            description: skill.description,
-          },
-          generated: null,
-          status: "error",
-          error: error instanceof Error ? error.message : "Unknown error",
-        });
-      }
-    }
-
-    return NextResponse.json({
-      message: `Backfill completed. ${successCount} skills updated, ${errorCount} errors.`,
-      taxonomy: {
-        categoriesCount: taxonomy.categories.length,
-        tagsCount: taxonomy.tags.length,
-        sampleCategories: taxonomy.categories.slice(0, 10),
-      },
-      stats: {
-        total: skills.length,
-        success: successCount,
-        error: errorCount,
-      },
-      results,
+    return buildSuccessResponse(taxonomy, results, {
+      total: skills.length,
+      success: successCount,
+      error: errorCount,
     });
   } catch (error) {
-    console.error("Backfill error:", error);
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Unknown error" },
-      { status: 500 }
-    );
+    return buildErrorResponse(error);
   }
 }
