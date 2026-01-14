@@ -24,14 +24,16 @@ export async function fetchExistingTaxonomy(): Promise<ExistingTaxonomy> {
           ne(skillsTable.category, ""),
           ne(skillsTable.category, "Uncategorized")
         )
-      ),
+      )
+      .limit(10),
     // Fetch unique tags using PostgreSQL's unnest for array columns
     db
       .selectDistinct({
         tag: sql<string>`unnest(${skillsTable.tags})`.as("tag"),
       })
       .from(skillsTable)
-      .where(sql`array_length(${skillsTable.tags}, 1) > 0`),
+      .where(sql`array_length(${skillsTable.tags}, 1) > 0`)
+      .limit(10),
   ]);
 
   const categories = categoryRows
