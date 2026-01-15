@@ -3,7 +3,6 @@ import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { db } from "@/db";
 import { skillsTable } from "@/db/schema";
-import { siteConfig } from "@/lib/site-config";
 import { DEFAULT_PAGE_SIZE } from "@/lib/skills-pagination";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -13,14 +12,14 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Agent Skills Tags | Agent Skills",
   description:
-    "Browse every tag in Agent Skills and discover collections of skills by topic.",
+    "Browse all Agent Skills tags to find Agent Skills collections by topic, from automation to research and beyond.",
   alternates: {
     canonical: "/tags",
   },
   openGraph: {
     title: "Agent Skills Tags | Agent Skills",
     description:
-      "Browse every tag in Agent Skills and discover collections of skills by topic.",
+      "Browse all Agent Skills tags to find Agent Skills collections by topic, from automation to research and beyond.",
     url: "/tags",
     type: "website",
   },
@@ -28,7 +27,7 @@ export const metadata: Metadata = {
     card: "summary",
     title: "Agent Skills Tags | Agent Skills",
     description:
-      "Browse every tag in Agent Skills and discover collections of skills by topic.",
+      "Browse all Agent Skills tags to find Agent Skills collections by topic, from automation to research and beyond.",
   },
 };
 
@@ -76,28 +75,43 @@ export default async function TagsPage({ searchParams }: TagsPageProps) {
   const pagedTags = tags.slice(startIndex, startIndex + DEFAULT_PAGE_SIZE);
   const buildPageHref = (value: number) =>
     value > 1 ? `/tags?page=${value}` : "/tags";
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    name: "Agent Skills Tags",
+    description:
+      "Browse all Agent Skills tags to find Agent Skills collections by topic.",
+    url: "https://agent-skills.md/tags",
+    mainEntity: {
+      "@type": "ItemList",
+      itemListElement: pagedTags.map((tag, index) => ({
+        "@type": "ListItem",
+        position: startIndex + index + 1,
+        name: tag.name,
+        url: `https://agent-skills.md/tags/${encodeURIComponent(tag.name)}`,
+      })),
+    },
+  };
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <SiteHeader />
 
       <main className="relative mx-auto container flex-1 px-6 pt-12 pb-16">
+        <script
+          type="application/ld+json"
+          // eslint-disable-next-line react/no-danger
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
         <div className="pointer-events-none absolute inset-0 -z-10">
           <div className="absolute inset-x-0 top-0 h-64 bg-[radial-gradient(circle_at_top,rgba(56,189,248,0.15),transparent_65%)]" />
           <div className="absolute right-12 top-20 h-28 w-28 rounded-full border border-border/50 bg-muted/30 blur-2xl" />
         </div>
 
         <div className="mx-auto max-w-3xl text-center">
-          <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">
-            Agent Skills Tags
-          </p>
           <h1 className="mt-4 text-3xl font-semibold tracking-tight text-foreground sm:text-5xl">
-            Explore every skill tag
+            Explore Agent Skills by tags
           </h1>
-          <p className="mt-4 text-sm text-muted-foreground sm:text-base">
-            Discover the topics powering {siteConfig.site.title}. Each tag leads
-            to a curated list of skills.
-          </p>
         </div>
 
         {totalTags === 0 ? (

@@ -29,7 +29,7 @@ export function SkillCard({ skill, index }: SkillCardProps) {
         </div>
 
         {skill.tags.length > 0 && (
-          <div className="flex h-16 flex-wrap gap-2 ">
+          <div className="flex h-6 flex-wrap gap-2 ">
             {skill.tags.slice(0, 4).map((tag: string) => (
               <span
                 key={tag}

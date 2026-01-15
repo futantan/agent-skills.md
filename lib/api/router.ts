@@ -257,6 +257,7 @@ const tagSkills = os
     const items = await db
       .select({
         id: skillsTable.id,
+        repoId: skillsTable.repoId,
         name: skillsTable.name,
         description: skillsTable.description,
         category: skillsTable.category,
@@ -264,8 +265,13 @@ const tagSkills = os
         authorName: skillsTable.authorName,
         authorUrl: skillsTable.authorUrl,
         authorAvatarUrl: skillsTable.authorAvatarUrl,
+        createdAt: skillsTable.createdAt,
+        updatedAt: skillsTable.updatedAt,
+        repoStars: reposTable.stars,
+        repoForks: reposTable.forks,
       })
       .from(skillsTable)
+      .leftJoin(reposTable, eq(skillsTable.repoId, reposTable.id))
       .where(tagMatch)
       .orderBy(desc(skillsTable.updatedAt))
       .limit(input.pageSize)
