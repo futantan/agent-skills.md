@@ -21,10 +21,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       authorName: skillsTable.authorName,
       authorUrl: skillsTable.authorUrl,
       authorAvatarUrl: skillsTable.authorAvatarUrl,
+      tags: skillsTable.tags,
     })
     .from(skillsTable);
 
   const authorMap = new Map<string, Date>();
+  const tagMap = new Map<string, Date>();
   for (const row of rows) {
     const slug = getAuthorSlug({
       name: row.authorName,
@@ -38,6 +40,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const updatedAt = row.updatedAt ?? new Date();
     if (!current || updatedAt > current) {
       authorMap.set(slug.toLowerCase(), updatedAt);
+    }
+
+    for (const rawTag of row.tags ?? []) {
+      const tag = rawTag.trim();
+      if (!tag) {
+        continue;
+      }
+      const key = tag.toLowerCase();
+      const existing = tagMap.get(key);
+      if (!existing || updatedAt > existing) {
+        tagMap.set(key, updatedAt);
+      }
     }
   }
 
@@ -53,11 +67,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     lastModified: updatedAt,
   }));
 
+  const tagEntries: MetadataRoute.Sitemap = Array.from(tagMap.entries()).map(
+    ([tag, updatedAt]) => ({
+      url: `${BASE_URL}/tags/${encodeURIComponent(tag)}`,
+      lastModified: updatedAt,
+    })
+  );
+
   return [
     { url: `${BASE_URL}/`, lastModified: new Date() },
     { url: `${BASE_URL}/authors`, lastModified: new Date() },
+    { url: `${BASE_URL}/tags`, lastModified: new Date() },
     { url: `${BASE_URL}/submit`, lastModified: new Date() },
     ...authorEntries,
+    ...tagEntries,
     ...skillEntries,
   ];
 }

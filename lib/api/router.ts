@@ -29,10 +29,19 @@ const authorInput = z.object({
 
 const authorPaginationInput = authorInput.merge(paginationInput);
 
+const tagInput = z.object({
+  tag: z.string().min(1),
+});
+
+const tagPaginationInput = tagInput.merge(paginationInput);
+
 const buildAuthorMatch = (normalizedAuthor: string) => {
   // Use indexed authorSlug column for efficient lookups
   return eq(skillsTable.authorSlug, normalizedAuthor);
 };
+
+const buildTagMatch = (normalizedTag: string) =>
+  sql`array_position(${skillsTable.tags}, ${normalizedTag}) is not null`;
 
 async function fetchSkillsPage({
   where,
@@ -217,6 +226,48 @@ const authorSkills = os
       })
       .from(skillsTable)
       .where(authorMatch)
+      .limit(input.pageSize)
+      .offset(offset);
+
+    return { items, page: input.page, pageSize: input.pageSize };
+  });
+
+const tagSummary = os.input(tagInput).handler(async ({ input }) => {
+  const normalizedTag = input.tag.trim();
+  const tagMatch = buildTagMatch(normalizedTag);
+
+  const [{ count }] = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(skillsTable)
+    .where(tagMatch);
+
+  return {
+    totalCount: Number(count ?? 0),
+    tag: normalizedTag,
+  };
+});
+
+const tagSkills = os
+  .input(tagPaginationInput)
+  .handler(async ({ input }) => {
+    const normalizedTag = input.tag.trim();
+    const tagMatch = buildTagMatch(normalizedTag);
+    const offset = (input.page - 1) * input.pageSize;
+
+    const items = await db
+      .select({
+        id: skillsTable.id,
+        name: skillsTable.name,
+        description: skillsTable.description,
+        category: skillsTable.category,
+        tags: skillsTable.tags,
+        authorName: skillsTable.authorName,
+        authorUrl: skillsTable.authorUrl,
+        authorAvatarUrl: skillsTable.authorAvatarUrl,
+      })
+      .from(skillsTable)
+      .where(tagMatch)
+      .orderBy(desc(skillsTable.updatedAt))
       .limit(input.pageSize)
       .offset(offset);
 
@@ -437,6 +488,10 @@ export const router = {
   authors: {
     summary: authorSummary,
     skills: authorSkills,
+  },
+  tags: {
+    summary: tagSummary,
+    skills: tagSkills,
   },
   repos: {
     submit: submitRepoHandler,

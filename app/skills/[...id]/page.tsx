@@ -162,12 +162,13 @@ export default async function SkillDetailPage({
               {skill.tags.length > 0 ? (
                 <div className="mt-4 flex flex-wrap gap-2 sm:mt-6">
                   {skill.tags.map((tag) => (
-                    <span
+                    <Link
                       key={tag}
-                      className="inline-flex items-center rounded-full border border-border/60 bg-muted/40 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground sm:px-3 sm:py-1 sm:text-xs"
+                      className="inline-flex items-center rounded-full border border-border/60 bg-muted/40 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground transition hover:text-primary sm:px-3 sm:py-1 sm:text-xs"
+                      href={`/tags/${encodeURIComponent(tag)}`}
                     >
                       {tag}
-                    </span>
+                    </Link>
                   ))}
                 </div>
               ) : null}
