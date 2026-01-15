@@ -56,7 +56,6 @@ export function SkillsExplorer({
   const skills = pageData.items;
   const totalPages = pageData.totalPages;
   const currentPage = page;
-  const maxVisibleTags = 4;
 
   const categories = useMemo(() => {
     const unique = new Set(
@@ -167,10 +166,9 @@ export function SkillsExplorer({
                             </p>
                           </div>
 
-                          {skill.tags.length > 0 &&
-                          skill.tags.length <= maxVisibleTags ? (
-                            <div className="mb-4 flex max-h-16 flex-wrap gap-2 overflow-hidden">
-                              {skill.tags.map((tag: string) => (
+                          {skill.tags.length > 0 && (
+                            <div className="mb-4 flex h-16 flex-wrap gap-2 ">
+                              {skill.tags.slice(0, 4).map((tag: string) => (
                                 <span
                                   key={tag}
                                   className="inline-flex items-center rounded-md border border-border/40 bg-muted/30 px-2 py-0.5 text-xs font-medium text-muted-foreground"
@@ -179,7 +177,7 @@ export function SkillsExplorer({
                                 </span>
                               ))}
                             </div>
-                          ) : null}
+                          )}
 
                           <div className="mt-auto flex items-center justify-between gap-4 border-t border-border/40 pt-4">
                             <div className="flex flex-col gap-2">
