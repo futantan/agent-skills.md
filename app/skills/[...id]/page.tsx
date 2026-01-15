@@ -1,3 +1,4 @@
+import { CodeBlockCommand } from "@/components/code-block-command";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { SkillFilesExplorer } from "@/components/skill-files-explorer";
@@ -307,6 +308,18 @@ export default async function SkillDetailPage({
             </div>
           </div>
         </div>
+
+        <section className="py-6 flex flex-col gap-4">
+          <h3 className="text-lg font-semibold text-foreground">
+            Install this agent skill to your local
+          </h3>
+          <CodeBlockCommand
+            __bun__={`bunx add-skill https://github.com/${skill.id}`}
+            __npm__={`npx add-skill https://github.com/${skill.id}`}
+            __pnpm__={`pnpm dlx add-skill https://github.com/${skill.id}`}
+            __yarn__={`yarn dlx add-skill https://github.com/${skill.id}`}
+          />
+        </section>
 
         <SkillFilesExplorer
           skillId={skill.id}
