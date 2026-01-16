@@ -10,13 +10,29 @@ export function SiteFooter() {
             <p className="text-sm text-muted-foreground">
               Made with love by human beings using AI.
             </p>
-            <Link
-              className="mt-2 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-foreground transition hover:text-primary"
-              href="/authors"
-            >
-              Browse Agent Skills Authors
-              <span className="text-primary">→</span>
-            </Link>
+            <div className="mt-3 flex flex-col items-center gap-3 text-xs font-semibold uppercase tracking-[0.22em] sm:items-start">
+              <Link
+                className="inline-flex items-center gap-2 text-foreground transition hover:text-primary"
+                href="/authors"
+              >
+                Browse Agent Skills Authors
+                <span className="text-primary">→</span>
+              </Link>
+              <Link
+                className="inline-flex items-center gap-2 text-foreground transition hover:text-primary"
+                href="/tags"
+              >
+                Browse Tags
+                <span className="text-primary">→</span>
+              </Link>
+              <Link
+                className="inline-flex items-center gap-2 text-foreground transition hover:text-primary"
+                href="/categories"
+              >
+                Browse Categories
+                <span className="text-primary">→</span>
+              </Link>
+            </div>
           </div>
           <a
             className="group flex items-center gap-3 rounded-full border border-border/40 bg-background/60 px-4 py-2 text-sm font-semibold text-foreground shadow-sm shadow-primary/10 transition hover:border-primary/50 hover:bg-background hover:shadow-md hover:shadow-primary/20"

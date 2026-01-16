@@ -35,6 +35,12 @@ const tagInput = z.object({
 
 const tagPaginationInput = tagInput.merge(paginationInput);
 
+const categoryInput = z.object({
+  category: z.string().min(1),
+});
+
+const categoryPaginationInput = categoryInput.merge(paginationInput);
+
 const buildAuthorMatch = (normalizedAuthor: string) => {
   // Use indexed authorSlug column for efficient lookups
   return eq(skillsTable.authorSlug, normalizedAuthor);
@@ -42,6 +48,9 @@ const buildAuthorMatch = (normalizedAuthor: string) => {
 
 const buildTagMatch = (normalizedTag: string) =>
   sql`array_position(${skillsTable.tags}, ${normalizedTag}) is not null`;
+
+const buildCategoryMatch = (normalizedCategory: string) =>
+  eq(skillsTable.category, normalizedCategory);
 
 async function fetchSkillsPage({
   where,
@@ -280,6 +289,56 @@ const tagSkills = os
     return { items, page: input.page, pageSize: input.pageSize };
   });
 
+const categorySummary = os
+  .input(categoryInput)
+  .handler(async ({ input }) => {
+    const normalizedCategory = input.category.trim();
+    const categoryMatch = buildCategoryMatch(normalizedCategory);
+
+    const [{ count }] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(skillsTable)
+      .where(categoryMatch);
+
+    return {
+      totalCount: Number(count ?? 0),
+      category: normalizedCategory,
+    };
+  });
+
+const categorySkills = os
+  .input(categoryPaginationInput)
+  .handler(async ({ input }) => {
+    const normalizedCategory = input.category.trim();
+    const categoryMatch = buildCategoryMatch(normalizedCategory);
+    const offset = (input.page - 1) * input.pageSize;
+
+    const items = await db
+      .select({
+        id: skillsTable.id,
+        repoId: skillsTable.repoId,
+        name: skillsTable.name,
+        description: skillsTable.description,
+        category: skillsTable.category,
+        tags: skillsTable.tags,
+        authorName: skillsTable.authorName,
+        authorUrl: skillsTable.authorUrl,
+        authorAvatarUrl: skillsTable.authorAvatarUrl,
+        createdAt: skillsTable.createdAt,
+        updatedAt: skillsTable.updatedAt,
+        repoStars: reposTable.stars,
+        repoForks: reposTable.forks,
+      })
+      .from(skillsTable)
+      .leftJoin(reposTable, eq(skillsTable.repoId, reposTable.id))
+      .where(categoryMatch)
+      .orderBy(desc(skillsTable.updatedAt))
+      .limit(input.pageSize)
+      .offset(offset);
+
+    return { items, page: input.page, pageSize: input.pageSize };
+  });
+
 const submitRepoHandler = os
   .input(
     z.object({
@@ -498,6 +557,10 @@ export const router = {
   tags: {
     summary: tagSummary,
     skills: tagSkills,
+  },
+  categories: {
+    summary: categorySummary,
+    skills: categorySkills,
   },
   repos: {
     submit: submitRepoHandler,
