@@ -15,7 +15,7 @@ import type { SkillsPage } from "@/lib/types";
 import { useQuery } from "@tanstack/react-query";
 import { Loader2, Search, X } from "lucide-react";
 import { debounce, parseAsInteger, parseAsString, useQueryState } from "nuqs";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 type SkillsExplorerProps = {
   initialPage: SkillsPage;
@@ -69,12 +69,15 @@ export function SkillsExplorer({
     }
   }, [activeCategory, categories]);
 
-  const handleSearchChange = (value: string) => {
-    void setUrlQuery(value);
-    if (page !== 1) {
-      void setPage(1);
-    }
-  };
+  const handleSearchChange = useCallback(
+    (value: string) => {
+      void setUrlQuery(value);
+      if (page !== 1) {
+        void setPage(1);
+      }
+    },
+    [page, setPage, setUrlQuery]
+  );
 
   useEffect(() => {
     if (!searchQuery.isPlaceholderData && totalPages > 0 && page > totalPages) {
