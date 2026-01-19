@@ -39,10 +39,6 @@ export async function generateMetadata({
       url: `/categories/${decodedCategory}`,
       type: "website",
     },
-    twitter: {
-      title: `${decodedCategory} | Agent Skills`,
-      description,
-    },
   };
 }
 

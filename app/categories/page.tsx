@@ -23,11 +23,6 @@ export const metadata: Metadata = {
     url: "/categories",
     type: "website",
   },
-  twitter: {
-    title: "Agent Skills Categories | Agent Skills",
-    description:
-      "Browse Agent Skills categories to explore curated collections, from automation to research and beyond.",
-  },
 };
 
 type CategoriesPageProps = {

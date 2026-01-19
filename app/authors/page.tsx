@@ -1,9 +1,9 @@
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
-import { getAuthorDisplayName, getAuthorSlug } from "@/lib/author-utils";
-import { siteConfig } from "@/lib/site-config";
 import { db } from "@/db";
 import { skillsTable } from "@/db/schema";
+import { getAuthorDisplayName, getAuthorSlug } from "@/lib/author-utils";
+import { siteConfig } from "@/lib/site-config";
 import type { Metadata } from "next";
 import Link from "next/link";
 
@@ -22,11 +22,6 @@ export const metadata: Metadata = {
       "Browse every GitHub author we have indexed, and explore their published Agent Skills.",
     url: "/authors",
     type: "website",
-  },
-  twitter: {
-    title: "Agent Skills Authors | Agent Skills",
-    description:
-      "Browse every GitHub author we have indexed, and explore their published Agent Skills.",
   },
 };
 

@@ -104,10 +104,6 @@ export async function generateMetadata({
       url: `/skills/${normalizedId}`,
       type: "article",
     },
-    twitter: {
-      title,
-      description,
-    },
   };
 }
 

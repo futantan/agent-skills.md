@@ -20,10 +20,6 @@ export const metadata: Metadata = {
     url: "/",
     type: "website",
   },
-  twitter: {
-    title: siteConfig.site.title,
-    description: siteConfig.site.description,
-  },
 };
 
 type SearchParams = Record<string, string | string[] | undefined>;

@@ -37,10 +37,6 @@ export async function generateMetadata({
       url: `/authors/${decodedAuthor}`,
       type: "profile",
     },
-    twitter: {
-      title: `${displayName} | Agent Skills`,
-      description,
-    },
   };
 }
 
