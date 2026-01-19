@@ -25,6 +25,18 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://agent-skills.md/"),
   title: siteConfig.site.title,
   description: siteConfig.site.description,
+  openGraph: {
+    title: siteConfig.site.title,
+    description: siteConfig.site.description,
+    type: "website",
+    images: ["/opengraph-image.png"],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: siteConfig.site.title,
+    description: siteConfig.site.description,
+    images: ["/twitter-image.png"],
+  },
 };
 
 export default function RootLayout({

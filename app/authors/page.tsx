@@ -24,7 +24,6 @@ export const metadata: Metadata = {
     type: "website",
   },
   twitter: {
-    card: "summary",
     title: "Agent Skills Authors | Agent Skills",
     description:
       "Browse every GitHub author we have indexed, and explore their published Agent Skills.",

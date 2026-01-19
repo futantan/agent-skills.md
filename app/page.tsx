@@ -21,7 +21,6 @@ export const metadata: Metadata = {
     type: "website",
   },
   twitter: {
-    card: "summary",
     title: siteConfig.site.title,
     description: siteConfig.site.description,
   },

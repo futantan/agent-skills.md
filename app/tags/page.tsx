@@ -24,7 +24,6 @@ export const metadata: Metadata = {
     type: "website",
   },
   twitter: {
-    card: "summary",
     title: "Agent Skills Tags | Agent Skills",
     description:
       "Browse all Agent Skills tags to find Agent Skills collections by topic, from automation to research and beyond.",

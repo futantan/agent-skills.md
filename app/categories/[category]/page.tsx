@@ -40,7 +40,6 @@ export async function generateMetadata({
       type: "website",
     },
     twitter: {
-      card: "summary",
       title: `${decodedCategory} | Agent Skills`,
       description,
     },
