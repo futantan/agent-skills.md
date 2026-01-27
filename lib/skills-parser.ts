@@ -45,9 +45,12 @@ export async function fetchSkillsFromRepo(
     ? { Authorization: `Bearer ${options.token}` }
     : undefined;
 
+  // Only consider it an explicit path if there's actually a path specified
+  // (not just a branch reference like /tree/main)
+  const effectiveSkillsPath = options.skillsPath ?? repo.skillsPath;
   const hasExplicitPath =
-    options.skillsPath !== undefined || repo.skillsPath !== undefined;
-  const requestedPath = resolveSkillsPath(options.skillsPath ?? repo.skillsPath);
+    effectiveSkillsPath !== undefined && effectiveSkillsPath !== "";
+  const requestedPath = resolveSkillsPath(effectiveSkillsPath);
   const fetchDir = async (path: string, allowFailure: boolean) => {
     const pathSegment = path ? `/${path}` : "";
     const request = getJson(
@@ -142,6 +145,10 @@ export function parseGitHubRepo(input: string): ParsedRepo | null {
       }
       if (pathSegments.length) {
         skillsPath = resolveSkillsPath(pathSegments.join("/"));
+      } else {
+        // Explicitly set to undefined when /tree/branch or /blob/branch has no path
+        // This ensures the fallback to root directory works correctly
+        skillsPath = undefined;
       }
     }
 

@@ -27,13 +27,7 @@ export async function submitRepo(
     .where(and(eq(reposTable.owner, parsed.owner), eq(reposTable.name, parsed.repo)))
     .limit(1);
 
-  if (existingRepo) {
-    return {
-      repoId: existingRepo.id,
-      skillsAdded: 0,
-      alreadyExists: true,
-    };
-  }
+  // Continue to fetch skills even if repo exists, to update them
 
   const headers = token ? { Authorization: `Bearer ${token}` } : undefined;
   const repoId = `${parsed.owner}/${parsed.repo}`;
@@ -134,5 +128,6 @@ export async function submitRepo(
   return {
     repoId,
     skillsAdded: skills.length,
+    alreadyExists: !!existingRepo,
   };
 }
