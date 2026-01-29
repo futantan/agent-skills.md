@@ -1,5 +1,6 @@
 "use client";
 
+import { CarbonAdInCard } from "@/components/carbon-ad";
 import { PaginationNav } from "@/components/pagination-nav";
 import { SkillCard } from "@/components/skill-card";
 import {
@@ -147,10 +148,18 @@ export function SkillsExplorer({
                   .filter(
                     (skill) => category === "All" || skill.category === category
                   )
-                  .map((skill, index) => {
-                    return (
-                      <SkillCard key={skill.id} skill={skill} index={index} />
-                    );
+                  .flatMap((skill, index) => {
+                    const items = [
+                      <SkillCard key={skill.id} skill={skill} index={index} />,
+                    ];
+                    if (index === 1) {
+                      items.push(
+                        <div key="ad" className="h-full ">
+                          <CarbonAdInCard />
+                        </div>
+                      );
+                    }
+                    return items;
                   })}
               </div>
             </TabsContent>
