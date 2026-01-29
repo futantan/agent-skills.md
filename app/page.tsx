@@ -1,5 +1,6 @@
 import { FaqSection } from "@/components/faq-section";
 import { LogoCarouselSection } from "@/components/logo-carousel-section";
+import { CarbonAd } from "@/components/carbon-ad";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { SkillsExplorer } from "@/components/skills-explorer";
@@ -84,6 +85,8 @@ export default async function Home({ searchParams }: HomeProps) {
                 <p className="text-lg leading-8 text-muted-foreground animate-fade-in-up [animation-delay:200ms]">
                   {siteConfig.site.description}
                 </p>
+
+                <CarbonAd />
               </div>
             </div>
           </div>
