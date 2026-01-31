@@ -1,3 +1,4 @@
+import { CarbonAdInCard } from "@/components/carbon-ad";
 import { CodeBlockCommand } from "@/components/code-block-command";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
@@ -299,6 +300,10 @@ export default async function SkillDetailPage({
                     </div>
                   ) : null}
                 </div>
+              </div>
+
+              <div className="rounded-2xl border border-border/40 bg-muted/20 p-4 sm:p-6">
+                <CarbonAdInCard />
               </div>
             </div>
           </div>
