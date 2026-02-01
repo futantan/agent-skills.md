@@ -100,7 +100,16 @@ export async function submitRepo(repoInput: string, token?: string) {
         skillsPath,
       });
     } catch (error) {
+      console.error("submitRepo skills fetch failed", {
+        repoId,
+        skillsPath,
+        error,
+      });
       if (!allowFailure) {
+        throw error;
+      }
+      const message = error instanceof Error ? error.message : String(error);
+      if (!message.includes("(404)")) {
         throw error;
       }
       return {

@@ -1,4 +1,4 @@
-export const DEFAULT_PAGE_SIZE = 18;
+export const DEFAULT_PAGE_SIZE = 50;
 
 export function buildPaginationItems(currentPage: number, totalPages: number) {
   if (totalPages <= 1) {
