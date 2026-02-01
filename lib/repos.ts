@@ -2,7 +2,7 @@ import { db } from "@/db";
 import { reposTable, skillsTable } from "@/db/schema";
 import { getAuthorSlug } from "@/lib/author-utils";
 import { fetchSkillsFromRepo, parseGitHubRepo } from "@/lib/skills-parser";
-import { and, eq } from "drizzle-orm";
+import { and, eq, notInArray, sql } from "drizzle-orm";
 
 type GitHubRepoInfo = {
   html_url?: string;
@@ -90,20 +90,37 @@ export async function submitRepo(repoInput: string, token?: string) {
   ];
 
   const hasExplicitPath = parsed.skillsPath !== undefined;
-  let skillsResult = await fetchSkillsFromRepo(repoInput, {
-    token,
-    skillsPath: hasExplicitPath ? parsed.skillsPath : "",
-  });
+  const tryFetchSkills = async (
+    skillsPath: string | undefined,
+    allowFailure: boolean
+  ) => {
+    try {
+      return await fetchSkillsFromRepo(repoInput, {
+        token,
+        skillsPath,
+      });
+    } catch (error) {
+      if (!allowFailure) {
+        throw error;
+      }
+      return {
+        skills: [],
+        skillsPath: skillsPath ?? "",
+      };
+    }
+  };
+
+  let skillsResult = await tryFetchSkills(
+    hasExplicitPath ? parsed.skillsPath : "",
+    !hasExplicitPath
+  );
 
   if (!hasExplicitPath && skillsResult.skills.length === 0) {
     for (const skillsPath of skillDiscoveryPaths) {
       if (skillsPath === skillsResult.skillsPath) {
         continue;
       }
-      skillsResult = await fetchSkillsFromRepo(repoInput, {
-        token,
-        skillsPath,
-      });
+      skillsResult = await tryFetchSkills(skillsPath, true);
       if (skillsResult.skills.length > 0) {
         break;
       }
@@ -161,29 +178,54 @@ export async function submitRepo(repoInput: string, token?: string) {
         set: repoUpdate,
       });
 
-    await tx.delete(skillsTable).where(eq(skillsTable.repoId, repoId));
-
     if (uniqueSkills.size) {
-      await tx.insert(skillsTable).values(
-        Array.from(uniqueSkills.values()).map((skill) => ({
-          id: skill.id,
-          repoId,
-          name: skill.name,
-          description: skill.description,
-          category: skill.category,
-          tags: skill.tags,
-          authorName: skill.author?.name,
-          authorUrl: skill.author?.url,
-          authorAvatarUrl: skill.author?.avatarUrl,
-          // Compute and store normalized author slug for indexed lookups
-          authorSlug: getAuthorSlug({
-            name: skill.author?.name,
-            url: skill.author?.url,
-            avatarUrl: skill.author?.avatarUrl,
-          }),
-          updatedAt: new Date(),
-        }))
-      );
+      const skillValues = Array.from(uniqueSkills.values()).map((skill) => ({
+        id: skill.id,
+        repoId,
+        name: skill.name,
+        description: skill.description,
+        category: skill.category,
+        tags: skill.tags,
+        authorName: skill.author?.name,
+        authorUrl: skill.author?.url,
+        authorAvatarUrl: skill.author?.avatarUrl,
+        // Compute and store normalized author slug for indexed lookups
+        authorSlug: getAuthorSlug({
+          name: skill.author?.name,
+          url: skill.author?.url,
+          avatarUrl: skill.author?.avatarUrl,
+        }),
+        updatedAt: new Date(),
+      }));
+
+      await tx
+        .insert(skillsTable)
+        .values(skillValues)
+        .onConflictDoUpdate({
+          target: [skillsTable.id],
+          set: {
+            repoId: sql`excluded."repoId"`,
+            name: sql`excluded."name"`,
+            description: sql`excluded."description"`,
+            category: sql`excluded."category"`,
+            tags: sql`excluded."tags"`,
+            authorName: sql`excluded."authorName"`,
+            authorUrl: sql`excluded."authorUrl"`,
+            authorAvatarUrl: sql`excluded."authorAvatarUrl"`,
+            authorSlug: sql`excluded."authorSlug"`,
+            updatedAt: new Date(),
+          },
+        });
+
+      const skillIds = skillValues.map((skill) => skill.id);
+      await tx
+        .delete(skillsTable)
+        .where(
+          and(
+            eq(skillsTable.repoId, repoId),
+            notInArray(skillsTable.id, skillIds)
+          )
+        );
     }
   });
 
