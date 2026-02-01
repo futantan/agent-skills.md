@@ -30,7 +30,39 @@ type GitHubContent = {
   content?: string;
 };
 
+type GitHubTreeResponse = {
+  tree: Array<{ path: string; type: string }>;
+};
+
 const API_BASE = "https://api.github.com";
+
+function shouldIncludeInternalSkills() {
+  const value = process.env.INSTALL_INTERNAL_SKILLS?.trim().toLowerCase();
+  return value === "1" || value === "true";
+}
+
+function buildSkill(
+  frontmatter: SkillFrontmatter,
+  repo: ParsedRepo
+): ParsedSkill | null {
+  if (!frontmatter.name || !frontmatter.description) {
+    return null;
+  }
+
+  const internalFlag = frontmatter.metadata?.internal?.toLowerCase();
+  if (internalFlag === "true" && !shouldIncludeInternalSkills()) {
+    return null;
+  }
+
+  return {
+    id: `${repo.owner}/${repo.repo}/${frontmatter.name}`,
+    name: frontmatter.name,
+    description: frontmatter.description,
+    category: frontmatter.metadata?.category ?? "Uncategorized",
+    tags: parseTags(frontmatter.metadata?.tags),
+    author: buildAuthor(frontmatter.metadata?.author, repo.owner),
+  };
+}
 
 export async function fetchSkillsFromRepo(
   repoInput: string,
@@ -60,6 +92,15 @@ export async function fetchSkillsFromRepo(
     return allowFailure ? request.catch(() => null) : request;
   };
 
+  const fetchDefaultBranch = async () => {
+    const data = await getJson(
+      `${API_BASE}/repos/${repo.owner}/${repo.repo}`,
+      headers
+    ).catch(() => null);
+    const branch = data?.default_branch;
+    return typeof branch === "string" && branch.trim() ? branch : "main";
+  };
+
   let basePath = requestedPath;
   let skillsDir = await fetchDir(basePath, !hasExplicitPath);
 
@@ -68,42 +109,67 @@ export async function fetchSkillsFromRepo(
     skillsDir = await fetchDir(basePath, true);
   }
 
+  const skills: ParsedSkill[] = [];
+  const fetchSkillFile = async (path: string) => {
+    const skillFile = await getJson(
+      `${API_BASE}/repos/${repo.owner}/${repo.repo}/contents/${path}`,
+      headers
+    ).catch(() => null);
+    if (!skillFile || skillFile.type !== "file" || !skillFile.content) {
+      return null;
+    }
+
+    const content = Buffer.from(skillFile.content, "base64").toString("utf-8");
+    const frontmatter = parseFrontmatter(content);
+    return buildSkill(frontmatter, repo);
+  };
+
+  const baseSkillPath = basePath ? `${basePath}/SKILL.md` : "SKILL.md";
+  const baseSkill = await fetchSkillFile(baseSkillPath);
+  if (baseSkill) {
+    skills.push(baseSkill);
+  }
+
   if (!Array.isArray(skillsDir)) {
-    return { skills: [], skillsPath: basePath };
+    return { skills, skillsPath: basePath };
   }
 
   const skillDirs = skillsDir.filter(
     (item: GitHubContent) => item.type === "dir"
   );
 
-  const skills: ParsedSkill[] = [];
-
   for (const dir of skillDirs) {
     const skillRoot = basePath ? `${basePath}/${dir.name}` : dir.name;
-    const skillFile = await getJson(
-      `${API_BASE}/repos/${repo.owner}/${repo.repo}/contents/${skillRoot}/SKILL.md`,
+    const skill = await fetchSkillFile(`${skillRoot}/SKILL.md`);
+    if (skill) {
+      skills.push(skill);
+    }
+  }
+
+  if (!skills.length && !hasExplicitPath) {
+    const defaultBranch = await fetchDefaultBranch();
+    const tree = await getJson(
+      `${API_BASE}/repos/${repo.owner}/${repo.repo}/git/trees/${defaultBranch}?recursive=1`,
       headers
     ).catch(() => null);
 
-    if (!skillFile || skillFile.type !== "file" || !skillFile.content) {
-      continue;
+    const treeItems = (tree as GitHubTreeResponse | null)?.tree ?? [];
+    const prefix = basePath ? `${basePath}/` : "";
+    const skillPaths = treeItems
+      .filter(
+        (item) =>
+          item.type === "blob" &&
+          item.path.endsWith("/SKILL.md") &&
+          item.path.startsWith(prefix)
+      )
+      .map((item) => item.path);
+
+    for (const skillPath of skillPaths) {
+      const skill = await fetchSkillFile(skillPath);
+      if (skill) {
+        skills.push(skill);
+      }
     }
-
-    const content = Buffer.from(skillFile.content, "base64").toString("utf-8");
-    const frontmatter = parseFrontmatter(content);
-
-    if (!frontmatter.name || !frontmatter.description) {
-      continue;
-    }
-
-    skills.push({
-      id: `${repo.owner}/${repo.repo}/${frontmatter.name}`,
-      name: frontmatter.name,
-      description: frontmatter.description,
-      category: frontmatter.metadata?.category ?? "Uncategorized",
-      tags: parseTags(frontmatter.metadata?.tags),
-      author: buildAuthor(frontmatter.metadata?.author, repo.owner),
-    });
   }
 
   return { skills, skillsPath: basePath };

@@ -30,7 +30,7 @@ export function SubmitForm() {
   const helperText = useMemo(() => {
     if (status === "success" && result) {
       return result.alreadyExists
-        ? `${result.repoId} already exists.`
+        ? `Updated ${result.skillsAdded} skills from ${result.repoId}.`
         : `Parsed ${result.skillsAdded} skills from ${result.repoId}.`;
     }
     return "Example: https://github.com/owner/repo/tree/main/skills (repo root defaults to skills/).";
@@ -127,13 +127,11 @@ export function SubmitForm() {
             <CheckCircle2 className="mt-0.5 h-4 w-4" />
             <div>
               <p className="font-medium">
-                {result.alreadyExists
-                  ? "Repo already exists."
-                  : "Repo captured."}
+                {result.alreadyExists ? "Repo updated." : "Repo captured."}
               </p>
               <p className="text-xs text-emerald-900/80 dark:text-emerald-100/80">
                 {result.alreadyExists
-                  ? "Submit a different repository to add new skills."
+                  ? `${result.repoId} refreshed with ${result.skillsAdded} skills.`
                   : `${result.repoId} added with ${result.skillsAdded} skills.`}
               </p>
             </div>

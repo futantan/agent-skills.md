@@ -12,10 +12,7 @@ type GitHubRepoInfo = {
   owner?: { login?: string; html_url?: string; avatar_url?: string } | null;
 };
 
-export async function submitRepo(
-  repoInput: string,
-  token?: string
-) {
+export async function submitRepo(repoInput: string, token?: string) {
   const parsed = parseGitHubRepo(repoInput);
   if (!parsed) {
     throw new Error("Invalid GitHub repository URL.");
@@ -24,7 +21,9 @@ export async function submitRepo(
   const [existingRepo] = await db
     .select({ id: reposTable.id })
     .from(reposTable)
-    .where(and(eq(reposTable.owner, parsed.owner), eq(reposTable.name, parsed.repo)))
+    .where(
+      and(eq(reposTable.owner, parsed.owner), eq(reposTable.name, parsed.repo))
+    )
     .limit(1);
 
   // Continue to fetch skills even if repo exists, to update them
@@ -46,10 +45,72 @@ export async function submitRepo(
     repoInfo = null;
   }
 
-  const { skills, skillsPath } = await fetchSkillsFromRepo(repoInput, {
+  const skillDiscoveryPaths = [
+    "",
+    "skills",
+    "skills/.curated",
+    "skills/.experimental",
+    "skills/.system",
+    ".agents/skills",
+    ".agent/skills",
+    ".augment/rules",
+    ".claude/skills",
+    ".cline/skills",
+    ".codebuddy/skills",
+    ".codex/skills",
+    ".commandcode/skills",
+    ".continue/skills",
+    ".crush/skills",
+    ".cursor/skills",
+    ".factory/skills",
+    ".gemini/skills",
+    ".github/skills",
+    ".goose/skills",
+    ".junie/skills",
+    ".iflow/skills",
+    ".kilocode/skills",
+    ".kiro/skills",
+    ".kode/skills",
+    ".mcpjam/skills",
+    ".vibe/skills",
+    ".mux/skills",
+    ".opencode/skills",
+    ".openclaude/skills",
+    ".openhands/skills",
+    ".pi/skills",
+    ".qoder/skills",
+    ".qwen/skills",
+    ".roo/skills",
+    ".trae/skills",
+    ".windsurf/skills",
+    ".zencoder/skills",
+    ".neovate/skills",
+    ".pochi/skills",
+    ".adal/skills",
+  ];
+
+  const hasExplicitPath = parsed.skillsPath !== undefined;
+  let skillsResult = await fetchSkillsFromRepo(repoInput, {
     token,
-    skillsPath: parsed.skillsPath,
+    skillsPath: hasExplicitPath ? parsed.skillsPath : "",
   });
+
+  if (!hasExplicitPath && skillsResult.skills.length === 0) {
+    for (const skillsPath of skillDiscoveryPaths) {
+      if (skillsPath === skillsResult.skillsPath) {
+        continue;
+      }
+      skillsResult = await fetchSkillsFromRepo(repoInput, {
+        token,
+        skillsPath,
+      });
+      if (skillsResult.skills.length > 0) {
+        break;
+      }
+    }
+  }
+
+  const { skills, skillsPath } = skillsResult;
   const uniqueSkills = new Map<string, (typeof skills)[number]>();
   for (const skill of skills) {
     if (uniqueSkills.has(skill.id)) {
@@ -73,7 +134,8 @@ export async function submitRepo(
       stars: repoInfo?.stargazers_count ?? 0,
       forks: repoInfo?.forks_count ?? 0,
       ownerName: repoInfo?.owner?.login ?? parsed.owner,
-      ownerUrl: repoInfo?.owner?.html_url ?? `https://github.com/${parsed.owner}`,
+      ownerUrl:
+        repoInfo?.owner?.html_url ?? `https://github.com/${parsed.owner}`,
       ownerAvatarUrl: repoInfo?.owner?.avatar_url ?? null,
       lastParsedAt: new Date(),
       updatedAt: new Date(),
