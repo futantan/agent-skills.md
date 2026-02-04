@@ -90,10 +90,14 @@ export async function submitRepo(repoInput: string, token?: string) {
   ];
 
   const hasExplicitPath = parsed.skillsPath !== undefined;
+  type SkillsFetchResult = Awaited<ReturnType<typeof fetchSkillsFromRepo>> & {
+    missingPath?: boolean;
+  };
+
   const tryFetchSkills = async (
     skillsPath: string | undefined,
     allowFailure: boolean
-  ) => {
+  ): Promise<SkillsFetchResult> => {
     try {
       return await fetchSkillsFromRepo(repoInput, {
         token,
@@ -105,16 +109,23 @@ export async function submitRepo(repoInput: string, token?: string) {
         skillsPath,
         error,
       });
-      if (!allowFailure) {
+      const message = error instanceof Error ? error.message : String(error);
+      if (!/\b404\b/.test(message)) {
+        if (!allowFailure) {
+          throw error;
+        }
         throw error;
       }
-      const message = error instanceof Error ? error.message : String(error);
-      if (!message.includes("(404)")) {
-        throw error;
+      if (!allowFailure) {
+        console.warn("Explicit skills path missing; falling back to discovery.", {
+          repoId,
+          skillsPath,
+        });
       }
       return {
         skills: [],
         skillsPath: skillsPath ?? "",
+        missingPath: true,
       };
     }
   };
@@ -124,7 +135,10 @@ export async function submitRepo(repoInput: string, token?: string) {
     !hasExplicitPath
   );
 
-  if (!hasExplicitPath && skillsResult.skills.length === 0) {
+  const allowDiscoveryFallback =
+    !hasExplicitPath || skillsResult.missingPath === true;
+
+  if (allowDiscoveryFallback && skillsResult.skills.length === 0) {
     for (const skillsPath of skillDiscoveryPaths) {
       if (skillsPath === skillsResult.skillsPath) {
         continue;

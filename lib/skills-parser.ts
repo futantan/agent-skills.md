@@ -331,7 +331,16 @@ async function getJson(url: string, headers?: Record<string, string>) {
     },
   });
   if (!response.ok) {
-    throw new Error(`Failed to fetch ${url}`);
+    const errorBody = await response.text();
+    console.error("GitHub API request failed:", {
+      url,
+      status: response.status,
+      statusText: response.statusText,
+      body: errorBody,
+    });
+    throw new Error(
+      `Failed to fetch ${url}: ${response.status} ${response.statusText}`
+    );
   }
   return response.json();
 }
