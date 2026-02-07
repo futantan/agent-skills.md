@@ -3,25 +3,34 @@
 import { CarbonAdInCard } from "@/components/carbon-ad";
 import { PaginationNav } from "@/components/pagination-nav";
 import { SkillCard } from "@/components/skill-card";
+import { Button } from "@/components/ui/button";
 import {
   InputGroup,
   InputGroupAddon,
   InputGroupButton,
   InputGroupInput,
 } from "@/components/ui/input-group";
-import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { orpc } from "@/lib/api/orpc";
 import { DEFAULT_PAGE_SIZE } from "@/lib/skills-pagination";
 import type { SkillsPage } from "@/lib/types";
 import { useQuery } from "@tanstack/react-query";
 import { Loader2, Search, X } from "lucide-react";
 import { debounce, parseAsInteger, parseAsString, useQueryState } from "nuqs";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect } from "react";
 
 type SkillsExplorerProps = {
   initialPage: SkillsPage;
   initialQuery: string;
 };
+
+const SEARCH_PRESETS: Array<{ label: string; query: string; count: number }> = [
+  { label: "UI", query: "ui", count: 4155 },
+  { label: "React", query: "react", count: 561 },
+  { label: "TypeScript", query: "typescript", count: 325 },
+  { label: "Frontend", query: "frontend", count: 286 },
+  { label: "Tailwind", query: "tailwind", count: 118 },
+  { label: "Next.js", query: "nextjs", count: 75 },
+];
 
 export function SkillsExplorer({
   initialPage,
@@ -37,7 +46,6 @@ export function SkillsExplorer({
     history: "replace",
   });
 
-  const [activeCategory, setActiveCategory] = useState("All");
   const activeQuery = urlQuery.trim();
   const pageSize = DEFAULT_PAGE_SIZE;
   const isInitialState =
@@ -56,19 +64,6 @@ export function SkillsExplorer({
   const skills = pageData.items;
   const totalPages = pageData.totalPages;
   const currentPage = page;
-
-  const categories = useMemo(() => {
-    const unique = new Set(
-      skills.map((skill) => skill.category).filter(Boolean) as string[]
-    );
-    return ["All", ...Array.from(unique)];
-  }, [skills]);
-
-  useEffect(() => {
-    if (!categories.includes(activeCategory)) {
-      setActiveCategory("All");
-    }
-  }, [activeCategory, categories]);
 
   const handleSearchChange = useCallback(
     (value: string) => {
@@ -118,53 +113,59 @@ export function SkillsExplorer({
         </InputGroup>
       </div>
 
-      <main className="mx-auto container px-6 pt-10 pb-16">
-        <Tabs
-          value={activeCategory}
-          onValueChange={setActiveCategory}
-          className="w-full"
-        >
-          {/* <div className="mb-12 flex flex-col gap-4">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <TabsList className="no-scrollbar flex w-full flex-nowrap gap-1 overflow-x-auto rounded-md bg-transparent p-0 sm:flex-wrap sm:overflow-visible sm:w-auto">
-                {categories.map((category, index) => (
-                  <TabsTrigger
-                    key={category}
-                    value={category}
-                    className="group flex h-6 items-center justify-center whitespace-nowrap rounded-sm border border-transparent px-1.5 font-mono text-xs font-medium text-foreground/80 transition-all hover:bg-muted/60 hover:text-foreground data-active:border-sky-500/30 data-active:bg-sky-50/80 data-active:text-sky-800 data-active:[box-shadow:hsl(210,90%,60%,0.18)_0_-2px_0_0_inset] animate-fade-in"
-                    style={{ animationDelay: `${index * 50}ms` }}
-                  >
-                    {category}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-            </div>
-          </div> */}
+      <div className="mx-auto mt-3 w-full max-w-4xl px-6">
+        <div className="rounded-lg flex flex-col lg:flex-row lg:items-center gap-4">
+          <p className="text-xs font-medium text-muted-foreground">
+            Popular searches
+          </p>
+          <div className="flex flex-wrap gap-1.5">
+            {SEARCH_PRESETS.map((preset) => {
+              const isActive = activeQuery.toLowerCase() === preset.query;
+              return (
+                <Button
+                  key={preset.query}
+                  size="xs"
+                  variant={isActive ? "secondary" : "ghost"}
+                  className={isActive ? "" : "border border-border/70"}
+                  onClick={() => handleSearchChange(preset.query)}
+                >
+                  {preset.label}
+                  <span className="text-[11px] tabular-nums text-muted-foreground">
+                    {preset.count}
+                  </span>
+                </Button>
+              );
+            })}
+            {activeQuery && (
+              <Button
+                size="xs"
+                variant="ghost"
+                className="border border-border/70"
+                onClick={() => handleSearchChange("")}
+              >
+                Reset
+              </Button>
+            )}
+          </div>
+        </div>
+      </div>
 
-          {categories.map((category) => (
-            <TabsContent key={category} value={category} className="mt-0">
-              <div className="grid auto-rows-[280px] gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                {skills
-                  .filter(
-                    (skill) => category === "All" || skill.category === category
-                  )
-                  .flatMap((skill, index) => {
-                    const items = [
-                      <SkillCard key={skill.id} skill={skill} index={index} />,
-                    ];
-                    if (index === 1) {
-                      items.push(
-                        <div key="ad" className="h-full ">
-                          <CarbonAdInCard />
-                        </div>
-                      );
-                    }
-                    return items;
-                  })}
-              </div>
-            </TabsContent>
-          ))}
-        </Tabs>
+      <main className="mx-auto container px-6 pt-10 pb-16">
+        <div className="grid auto-rows-[280px] gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {skills.flatMap((skill, index) => {
+            const items = [
+              <SkillCard key={skill.id} skill={skill} index={index} />,
+            ];
+            if (index === 1) {
+              items.push(
+                <div key="ad" className="h-full ">
+                  <CarbonAdInCard />
+                </div>
+              );
+            }
+            return items;
+          })}
+        </div>
         <PaginationNav
           buildHref={(value) =>
             value > 1

@@ -1,0 +1,1 @@
+- [ ] use https://github.com/vercel-labs/skills/blob/main/skills/find-skills/SKILL.md
