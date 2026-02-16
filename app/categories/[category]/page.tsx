@@ -2,13 +2,16 @@ import { PaginationNav } from "@/components/pagination-nav";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { SkillCard } from "@/components/skill-card";
-import { client } from "@/lib/api/orpc";
+import {
+  fetchCategorySkillsPage,
+  fetchCategorySummary,
+} from "@/lib/browse-queries";
 import { DEFAULT_PAGE_SIZE } from "@/lib/skills-pagination";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 type CategoryPageProps = {
   params: Promise<{ category: string }>;
@@ -20,9 +23,7 @@ export async function generateMetadata({
 }: CategoryPageProps): Promise<Metadata> {
   const { category } = await params;
   const decodedCategory = decodeURIComponent(category);
-  const summary = await client.categories.summary({
-    category: decodedCategory,
-  });
+  const summary = await fetchCategorySummary(decodedCategory);
   const description = summary.totalCount
     ? `Explore ${summary.totalCount} Agent Skills in the ${decodedCategory} category.`
     : "Discover production-ready AI skills shared by the community.";
@@ -56,9 +57,7 @@ export default async function CategoryPage({
   const parsedPage = Number.parseInt(pageParam, 10);
   const page = Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : 1;
 
-  const summary = await client.categories.summary({
-    category: decodedCategory,
-  });
+  const summary = await fetchCategorySummary(decodedCategory);
 
   if (!summary.totalCount) {
     notFound();
@@ -69,7 +68,7 @@ export default async function CategoryPage({
     Math.ceil(summary.totalCount / DEFAULT_PAGE_SIZE)
   );
   const currentPage = Math.min(page, totalPages);
-  const skillsPage = await client.categories.skills({
+  const skillsPage = await fetchCategorySkillsPage({
     category: decodedCategory,
     page: currentPage,
     pageSize: DEFAULT_PAGE_SIZE,

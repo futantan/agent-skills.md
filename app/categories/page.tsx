@@ -1,13 +1,12 @@
 import { PaginationNav } from "@/components/pagination-nav";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
-import { db } from "@/db";
-import { skillsTable } from "@/db/schema";
+import { fetchCategoriesIndex } from "@/lib/browse-queries";
 import { DEFAULT_PAGE_SIZE } from "@/lib/skills-pagination";
 import type { Metadata } from "next";
 import Link from "next/link";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 export const metadata: Metadata = {
   title: "Agent Skills Categories | Agent Skills",
@@ -29,11 +28,6 @@ type CategoriesPageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 };
 
-type CategorySummary = {
-  name: string;
-  count: number;
-};
-
 export default async function CategoriesPage({
   searchParams,
 }: CategoriesPageProps) {
@@ -44,31 +38,7 @@ export default async function CategoriesPage({
       : "";
   const parsedPage = Number.parseInt(pageParam, 10);
   const page = Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : 1;
-  const rows = await db
-    .select({ category: skillsTable.category })
-    .from(skillsTable);
-
-  const categoryMap = new Map<string, CategorySummary>();
-  for (const row of rows) {
-    const category = row.category?.trim();
-    if (!category) {
-      continue;
-    }
-    const key = category.toLowerCase();
-    const existing = categoryMap.get(key);
-    if (existing) {
-      existing.count += 1;
-      continue;
-    }
-    categoryMap.set(key, { name: category, count: 1 });
-  }
-
-  const categories = Array.from(categoryMap.values()).sort((a, b) => {
-    if (b.count !== a.count) {
-      return b.count - a.count;
-    }
-    return a.name.localeCompare(b.name);
-  });
+  const categories = await fetchCategoriesIndex();
   const totalCategories = categories.length;
   const totalPages = Math.max(
     1,

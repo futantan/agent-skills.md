@@ -2,13 +2,16 @@ import { PaginationNav } from "@/components/pagination-nav";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { SkillCard } from "@/components/skill-card";
-import { client } from "@/lib/api/orpc";
+import {
+  fetchTagSkillsPage,
+  fetchTagSummary,
+} from "@/lib/browse-queries";
 import { DEFAULT_PAGE_SIZE } from "@/lib/skills-pagination";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 type TagPageProps = {
   params: Promise<{ tag: string }>;
@@ -20,7 +23,7 @@ export async function generateMetadata({
 }: TagPageProps): Promise<Metadata> {
   const { tag } = await params;
   const decodedTag = decodeURIComponent(tag);
-  const summary = await client.tags.summary({ tag: decodedTag });
+  const summary = await fetchTagSummary(decodedTag);
   const description = summary.totalCount
     ? `Explore ${summary.totalCount} Agent Skills tagged with ${decodedTag}.`
     : "Discover production-ready AI skills shared by the community.";
@@ -51,7 +54,7 @@ export default async function TagPage({ params, searchParams }: TagPageProps) {
   const parsedPage = Number.parseInt(pageParam, 10);
   const page = Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : 1;
 
-  const summary = await client.tags.summary({ tag: decodedTag });
+  const summary = await fetchTagSummary(decodedTag);
 
   if (!summary.totalCount) {
     notFound();
@@ -62,7 +65,7 @@ export default async function TagPage({ params, searchParams }: TagPageProps) {
     Math.ceil(summary.totalCount / DEFAULT_PAGE_SIZE)
   );
   const currentPage = Math.min(page, totalPages);
-  const skillsPage = await client.tags.skills({
+  const skillsPage = await fetchTagSkillsPage({
     tag: decodedTag,
     page: currentPage,
     pageSize: DEFAULT_PAGE_SIZE,

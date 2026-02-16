@@ -1,13 +1,12 @@
 import { PaginationNav } from "@/components/pagination-nav";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
-import { db } from "@/db";
-import { skillsTable } from "@/db/schema";
+import { fetchTagsIndex } from "@/lib/browse-queries";
 import { DEFAULT_PAGE_SIZE } from "@/lib/skills-pagination";
 import type { Metadata } from "next";
 import Link from "next/link";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 export const metadata: Metadata = {
   title: "Agent Skills Tags | Agent Skills",
@@ -37,31 +36,7 @@ export default async function TagsPage({ searchParams }: TagsPageProps) {
       : "";
   const parsedPage = Number.parseInt(pageParam, 10);
   const page = Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : 1;
-  const rows = await db.select({ tags: skillsTable.tags }).from(skillsTable);
-
-  const tagMap = new Map<string, { name: string; count: number }>();
-  for (const row of rows) {
-    for (const rawTag of row.tags ?? []) {
-      const tag = rawTag.trim();
-      if (!tag) {
-        continue;
-      }
-      const key = tag.toLowerCase();
-      const existing = tagMap.get(key);
-      if (existing) {
-        existing.count += 1;
-        continue;
-      }
-      tagMap.set(key, { name: tag, count: 1 });
-    }
-  }
-
-  const tags = Array.from(tagMap.values()).sort((a, b) => {
-    if (b.count !== a.count) {
-      return b.count - a.count;
-    }
-    return a.name.localeCompare(b.name);
-  });
+  const tags = await fetchTagsIndex();
   const totalTags = tags.length;
   const totalPages = Math.max(1, Math.ceil(totalTags / DEFAULT_PAGE_SIZE));
   const currentPage = Math.min(page, totalPages);

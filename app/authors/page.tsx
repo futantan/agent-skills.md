@@ -1,13 +1,11 @@
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
-import { db } from "@/db";
-import { skillsTable } from "@/db/schema";
-import { getAuthorDisplayName, getAuthorSlug } from "@/lib/author-utils";
+import { fetchAuthorsIndex } from "@/lib/browse-queries";
 import { siteConfig } from "@/lib/site-config";
 import type { Metadata } from "next";
 import Link from "next/link";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 export const metadata: Metadata = {
   title: "Agent Skills Authors | Agent Skills",
@@ -26,68 +24,7 @@ export const metadata: Metadata = {
 };
 
 export default async function AuthorsPage() {
-  const rows = await db
-    .select({
-      authorName: skillsTable.authorName,
-      authorUrl: skillsTable.authorUrl,
-      authorAvatarUrl: skillsTable.authorAvatarUrl,
-    })
-    .from(skillsTable);
-
-  const authorsMap = new Map<
-    string,
-    {
-      slug: string;
-      name: string;
-      url?: string | null;
-      avatarUrl?: string | null;
-      skillCount: number;
-    }
-  >();
-
-  for (const row of rows) {
-    const slug = getAuthorSlug({
-      name: row.authorName,
-      url: row.authorUrl,
-      avatarUrl: row.authorAvatarUrl,
-    });
-    const displayName = getAuthorDisplayName({
-      name: row.authorName,
-      url: row.authorUrl,
-    });
-
-    if (!slug || !displayName) {
-      continue;
-    }
-
-    const key = slug.toLowerCase();
-    const existing = authorsMap.get(key);
-    if (!existing) {
-      authorsMap.set(key, {
-        slug,
-        name: displayName,
-        url: row.authorUrl ?? null,
-        avatarUrl: row.authorAvatarUrl ?? null,
-        skillCount: 1,
-      });
-      continue;
-    }
-
-    existing.skillCount += 1;
-    if (!existing.url && row.authorUrl) {
-      existing.url = row.authorUrl;
-    }
-    if (!existing.avatarUrl && row.authorAvatarUrl) {
-      existing.avatarUrl = row.authorAvatarUrl;
-    }
-  }
-
-  const authors = Array.from(authorsMap.values()).sort((a, b) => {
-    if (b.skillCount !== a.skillCount) {
-      return b.skillCount - a.skillCount;
-    }
-    return a.name.localeCompare(b.name);
-  });
+  const authors = await fetchAuthorsIndex();
 
   return (
     <div className="min-h-screen bg-background flex flex-col">

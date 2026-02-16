@@ -1,13 +1,16 @@
 import { PaginationNav } from "@/components/pagination-nav";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
-import { client } from "@/lib/api/orpc";
+import {
+  fetchAuthorSkillsPage,
+  fetchAuthorSummary,
+} from "@/lib/browse-queries";
 import { DEFAULT_PAGE_SIZE } from "@/lib/skills-pagination";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 type AuthorPageProps = {
   params: Promise<{ author: string }>;
@@ -19,7 +22,7 @@ export async function generateMetadata({
 }: AuthorPageProps): Promise<Metadata> {
   const { author } = await params;
   const decodedAuthor = decodeURIComponent(author);
-  const summary = await client.authors.summary({ author: decodedAuthor });
+  const summary = await fetchAuthorSummary(decodedAuthor);
   const displayName = summary.displayName ?? decodedAuthor;
   const description = summary.totalCount
     ? `Explore ${summary.totalCount} Agent Skills shared by ${displayName}.`
@@ -54,7 +57,7 @@ export default async function AuthorPage({
   const parsedPage = Number.parseInt(pageParam, 10);
   const page = Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : 1;
 
-  const summary = await client.authors.summary({ author: decodedAuthor });
+  const summary = await fetchAuthorSummary(decodedAuthor);
 
   if (!summary.totalCount) {
     notFound();
@@ -65,7 +68,7 @@ export default async function AuthorPage({
     Math.ceil(summary.totalCount / DEFAULT_PAGE_SIZE)
   );
   const currentPage = Math.min(page, totalPages);
-  const skillsPage = await client.authors.skills({
+  const skillsPage = await fetchAuthorSkillsPage({
     author: decodedAuthor,
     page: currentPage,
     pageSize: DEFAULT_PAGE_SIZE,
