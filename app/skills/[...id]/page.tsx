@@ -73,6 +73,36 @@ function extractMarkdownTitle(value: string) {
   return match?.[1]?.trim() ?? null;
 }
 
+function buildInstallSource({
+  repoUrl,
+  repoId,
+  markdownPath,
+  fallbackSkillId,
+}: {
+  repoUrl?: string | null;
+  repoId: string;
+  markdownPath?: string | null;
+  fallbackSkillId: string;
+}) {
+  const baseRepoUrl = (repoUrl ?? `https://github.com/${repoId}`).replace(
+    /\/+$/,
+    ""
+  );
+  const normalizedPath = (markdownPath ?? "").replace(/^\/+/, "");
+  const skillDir = normalizedPath.replace(/\/SKILL\.md$/i, "");
+
+  if (skillDir && skillDir !== normalizedPath) {
+    const encodedPath = skillDir
+      .split("/")
+      .filter(Boolean)
+      .map((segment) => encodeURIComponent(segment))
+      .join("/");
+    return `${baseRepoUrl}/tree/HEAD/${encodedPath}`;
+  }
+
+  return `https://github.com/${fallbackSkillId}`;
+}
+
 export async function generateMetadata({
   params,
 }: SkillDetailPageProps): Promise<Metadata> {
@@ -134,6 +164,12 @@ export default async function SkillDetailPage({
   const repoStars = skill.repoStars ?? 0;
   const repoForks = skill.repoForks ?? 0;
   const showRepoStats = repoStars > 0;
+  const installSource = buildInstallSource({
+    repoUrl: skill.repoUrl,
+    repoId: skill.repoId,
+    markdownPath: markdownPreview?.path,
+    fallbackSkillId: skill.id,
+  });
   const authorSlug = getAuthorSlug({
     name: skill.authorName,
     url: skill.authorUrl,
@@ -314,10 +350,10 @@ export default async function SkillDetailPage({
             Install this agent skill to your local
           </h3>
           <CodeBlockCommand
-            __bun__={`bunx add-skill https://github.com/${skill.id}`}
-            __npm__={`npx add-skill https://github.com/${skill.id}`}
-            __pnpm__={`pnpm dlx add-skill https://github.com/${skill.id}`}
-            __yarn__={`yarn dlx add-skill https://github.com/${skill.id}`}
+            __bun__={`bunx add-skill ${installSource}`}
+            __npm__={`npx add-skill ${installSource}`}
+            __pnpm__={`pnpm dlx add-skill ${installSource}`}
+            __yarn__={`yarn dlx add-skill ${installSource}`}
           />
         </section>
 

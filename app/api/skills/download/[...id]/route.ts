@@ -2,7 +2,12 @@ import { db } from "@/db";
 import { reposTable } from "@/db/schema";
 import { env } from "@/env";
 import { fetchBlobContent, fetchRepoTree } from "@/lib/github-files";
-import { joinSkillsPath, parseSkillId, resolveSkillsPath } from "@/lib/skill-path";
+import {
+  joinSkillsPath,
+  parseSkillId,
+  resolveSkillPrefixFromTree,
+  resolveSkillsPath,
+} from "@/lib/skill-path";
 import archiver from "archiver";
 import { NextResponse } from "next/server";
 import { PassThrough, Readable } from "node:stream";
@@ -30,11 +35,16 @@ export async function GET(
     .where(eq(reposTable.id, repoId))
     .limit(1);
   const basePath = resolveSkillsPath(repoRow?.skillsPath);
-  const prefixRoot = joinSkillsPath(basePath, skillDir);
-  const prefix = prefixRoot ? `${prefixRoot}/` : "";
+  const configuredPrefix = joinSkillsPath(basePath, skillDir);
 
   try {
     const entries = await fetchRepoTree(owner, repo, env.GITHUB_TOKEN);
+    const prefixRoot = resolveSkillPrefixFromTree({
+      entries,
+      basePath,
+      skillDir,
+    });
+    const prefix = prefixRoot ? `${prefixRoot}/` : "";
     const files = entries.filter(
       (entry) => entry.type === "blob" && entry.path.startsWith(prefix)
     );
@@ -98,7 +108,7 @@ export async function GET(
     console.error("skills.download failed", {
       owner,
       repo,
-      prefix,
+      prefix: configuredPrefix,
       error,
     });
     const message =

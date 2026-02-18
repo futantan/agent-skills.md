@@ -11,6 +11,7 @@ import { submitRepo } from "@/lib/repos";
 import {
   joinSkillsPath,
   parseSkillId,
+  resolveSkillPrefixFromTree,
   resolveSkillsPath,
 } from "@/lib/skill-path";
 import { DEFAULT_PAGE_SIZE } from "@/lib/skills-pagination";
@@ -372,9 +373,14 @@ const skillTree = os
       .where(eq(reposTable.id, repoId))
       .limit(1);
     const basePath = resolveSkillsPath(repoRow?.skillsPath);
-    const prefix = joinSkillsPath(basePath, skillDir);
+    const configuredPrefix = joinSkillsPath(basePath, skillDir);
     try {
       const entries = await fetchRepoTree(owner, repo, token);
+      const prefix = resolveSkillPrefixFromTree({
+        entries,
+        basePath,
+        skillDir,
+      });
       const root = buildFileTree(entries, prefix);
       if (!root.children?.length) {
         throw new Error("Skill folder not found.");
@@ -385,7 +391,7 @@ const skillTree = os
         id: input.id,
         owner,
         repo,
-        prefix,
+        prefix: configuredPrefix,
         error,
       });
       throw error;
@@ -409,15 +415,34 @@ const skillFile = os
       .where(eq(reposTable.id, repoId))
       .limit(1);
     const basePath = resolveSkillsPath(repoRow?.skillsPath);
-    const prefixRoot = joinSkillsPath(basePath, skillDir);
-    const prefix = prefixRoot ? `${prefixRoot}/` : "";
-    if (!decodedPath.startsWith(prefix)) {
-      throw new Error("Path must be inside the skill folder.");
-    }
+    const configuredPrefix = joinSkillsPath(basePath, skillDir);
+    const configuredPrefixWithSlash = configuredPrefix
+      ? `${configuredPrefix}/`
+      : "";
 
     const headers = (context as { headers?: Headers })?.headers;
     const token =
       headers?.get("x-github-token") ?? env.GITHUB_TOKEN ?? undefined;
+
+    let resolvedPrefix = configuredPrefix;
+    if (
+      configuredPrefixWithSlash &&
+      !decodedPath.startsWith(configuredPrefixWithSlash)
+    ) {
+      const entries = await fetchRepoTree(owner, repo, token);
+      resolvedPrefix = resolveSkillPrefixFromTree({
+        entries,
+        basePath,
+        skillDir,
+      });
+    }
+    const resolvedPrefixWithSlash = resolvedPrefix ? `${resolvedPrefix}/` : "";
+    if (
+      !resolvedPrefixWithSlash ||
+      !decodedPath.startsWith(resolvedPrefixWithSlash)
+    ) {
+      throw new Error("Path must be inside the skill folder.");
+    }
 
     const MAX_PREVIEW_BYTES = 512 * 1024;
     const TEXT_EXTENSIONS = new Set([
@@ -508,33 +533,47 @@ const skillMarkdown = os
       .where(eq(reposTable.id, repoId))
       .limit(1);
     const basePath = resolveSkillsPath(repoRow?.skillsPath);
-    const prefix = joinSkillsPath(basePath, skillDir);
-    const skillPath = prefix ? `${prefix}/SKILL.md` : "SKILL.md";
+    const configuredPrefix = joinSkillsPath(basePath, skillDir);
 
     const headers = (context as { headers?: Headers })?.headers;
     const token =
       headers?.get("x-github-token") ?? env.GITHUB_TOKEN ?? undefined;
 
     try {
-      const response = await fetchFileContent(owner, repo, skillPath, token);
-      if (response.type !== "file") {
-        return null;
-      }
-      if (!response.content || response.encoding !== "base64") {
-        return null;
-      }
-      const decoded = Buffer.from(response.content, "base64").toString("utf-8");
-      return {
-        path: skillPath,
-        size: response.size,
-        content: decoded,
+      const loadSkillMarkdown = async (skillPath: string) => {
+        const response = await fetchFileContent(owner, repo, skillPath, token);
+        if (response.type !== "file") {
+          return null;
+        }
+        if (!response.content || response.encoding !== "base64") {
+          return null;
+        }
+        const decoded = Buffer.from(response.content, "base64").toString(
+          "utf-8"
+        );
+        return {
+          path: skillPath,
+          size: response.size,
+          content: decoded,
+        };
       };
+
+      const entries = await fetchRepoTree(owner, repo, token);
+      const resolvedPrefix = resolveSkillPrefixFromTree({
+        entries,
+        basePath,
+        skillDir,
+      });
+      const resolvedSkillPath = resolvedPrefix
+        ? `${resolvedPrefix}/SKILL.md`
+        : "SKILL.md";
+      return loadSkillMarkdown(resolvedSkillPath).catch(() => null);
     } catch (error) {
       console.error("skills.markdown failed", {
         id: input.id,
         owner,
         repo,
-        path: skillPath,
+        path: configuredPrefix ? `${configuredPrefix}/SKILL.md` : "SKILL.md",
         error,
       });
       return null;
