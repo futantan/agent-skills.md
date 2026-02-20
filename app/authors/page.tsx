@@ -5,7 +5,7 @@ import { siteConfig } from "@/lib/site-config";
 import type { Metadata } from "next";
 import Link from "next/link";
 
-export const revalidate = 300;
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Agent Skills Authors | Agent Skills",
