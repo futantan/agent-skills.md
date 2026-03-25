@@ -31,3 +31,6 @@ pnpm dev
 ```
 
 Open http://localhost:3000 to view the app.
+
+## SymCLI
+- [SymCLI](https://symboliccomputation.com) - SymCLI is a math skill. Turn your coding agent into an AI mathematician, SymbolicComputation.com
