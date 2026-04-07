@@ -31,3 +31,8 @@ pnpm dev
 ```
 
 Open http://localhost:3000 to view the app.
+
+## Related Projects
+
+- [RemoteOpenClaw](https://remoteopenclaw.com) - Open marketplace for AI skills and personas built on OpenClaw
+
