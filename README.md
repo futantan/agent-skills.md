@@ -31,3 +31,7 @@ pnpm dev
 ```
 
 Open http://localhost:3000 to view the app.
+
+
+## Related Resources
+- [Skill Hub](https://skill.442595.xyz/) — 5800+ curated AI Agent Skills for Claude Code, Codex, Cursor, Hermes & more across 22 categories.
