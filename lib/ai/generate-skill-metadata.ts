@@ -53,7 +53,7 @@ export async function generateSkillMetadata(
       : "No existing tags";
 
   const { output } = await generateText({
-    model: openai("gpt-4.1-mini"),
+    model: openai("gpt-6-luna"),
     output: Output.object({ schema: skillMetadataSchema }),
     prompt: `You are a skill categorization expert. Given a skill's name and description, generate an appropriate category and relevant tags.
 
