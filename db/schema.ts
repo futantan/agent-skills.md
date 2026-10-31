@@ -1,5 +1,6 @@
 import { sql } from "drizzle-orm";
 import {
+  boolean,
   index,
   integer,
   pgTable,
@@ -49,6 +50,15 @@ export const skillsTable = pgTable(
     authorAvatarUrl: varchar({ length: 512 }),
     // Normalized author slug for indexed lookups (computed on insert/update)
     authorSlug: varchar({ length: 128 }),
+    // SKILL.md as fetched from GitHub, null until a real file was found
+    body: text(),
+    bodyPath: varchar({ length: 512 }),
+    // sha256 of the body without frontmatter
+    bodyHash: varchar({ length: 64 }),
+    bodyFetchedAt: timestamp({ withTimezone: true }),
+    indexable: boolean().notNull().default(false),
+    // Primary skill for a copy of it; no FK, repo sync deletes skill rows
+    canonicalSkillId: varchar({ length: 255 }),
     createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
   },
@@ -61,6 +71,8 @@ export const skillsTable = pgTable(
     index("skills_author_slug_idx").on(table.authorSlug),
     // Index for name searches - partial optimization for LIKE 'prefix%'
     index("skills_name_idx").on(table.name),
+    // Partial index for the small selected set (sitemap, related links)
+    index("skills_indexable_idx").on(table.indexable).where(sql`"indexable"`),
   ]
 );
 
