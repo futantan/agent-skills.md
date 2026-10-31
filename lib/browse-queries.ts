@@ -1,7 +1,7 @@
 import { db } from "@/db";
 import { reposTable, skillsTable } from "@/db/schema";
-import { getAuthorDisplayName, getAuthorSlug } from "@/lib/author-utils";
-import { desc, eq, sql } from "drizzle-orm";
+import { getAuthorDisplayName } from "@/lib/author-utils";
+import { desc, eq, isNotNull, sql } from "drizzle-orm";
 import { unstable_cache } from "next/cache";
 
 export const BROWSE_REVALIDATE_SECONDS = 300;
@@ -13,79 +13,44 @@ const buildTagMatch = (normalizedTag: string) =>
 const buildCategoryMatch = (normalizedCategory: string) =>
   eq(skillsTable.category, normalizedCategory);
 
-export type AuthorListItem = {
-  slug: string;
-  name: string;
-  url?: string | null;
-  avatarUrl?: string | null;
-  skillCount: number;
-};
+export const AUTHORS_PAGE_SIZE = 100;
 
-const fetchAuthorsIndexUncached = async (): Promise<AuthorListItem[]> => {
+const fetchAuthorsPageUncached = async (page: number) => {
   const rows = await db
     .select({
-      authorName: skillsTable.authorName,
-      authorUrl: skillsTable.authorUrl,
-      authorAvatarUrl: skillsTable.authorAvatarUrl,
+      slug: sql<string>`${skillsTable.authorSlug}`,
+      name: sql<string | null>`mode() within group (order by ${skillsTable.authorName})`,
+      avatarUrl: sql<string | null>`max(${skillsTable.authorAvatarUrl})`,
+      skillCount: sql<number>`count(*)::int`,
+      total: sql<number>`(count(*) over ())::int`,
     })
-    .from(skillsTable);
+    .from(skillsTable)
+    .where(isNotNull(skillsTable.authorSlug))
+    .groupBy(skillsTable.authorSlug)
+    .orderBy(desc(sql`count(*)`), skillsTable.authorSlug)
+    .limit(AUTHORS_PAGE_SIZE)
+    .offset((page - 1) * AUTHORS_PAGE_SIZE);
 
-  const authorsMap = new Map<string, AuthorListItem>();
-
-  for (const row of rows) {
-    const slug = getAuthorSlug({
-      name: row.authorName,
-      url: row.authorUrl,
-      avatarUrl: row.authorAvatarUrl,
-    });
-    const displayName = getAuthorDisplayName({
-      name: row.authorName,
-      url: row.authorUrl,
-    });
-
-    if (!slug || !displayName) {
-      continue;
-    }
-
-    const key = slug.toLowerCase();
-    const existing = authorsMap.get(key);
-
-    if (!existing) {
-      authorsMap.set(key, {
-        slug,
-        name: displayName,
-        url: row.authorUrl ?? null,
-        avatarUrl: row.authorAvatarUrl ?? null,
-        skillCount: 1,
-      });
-      continue;
-    }
-
-    existing.skillCount += 1;
-    if (!existing.url && row.authorUrl) {
-      existing.url = row.authorUrl;
-    }
-    if (!existing.avatarUrl && row.authorAvatarUrl) {
-      existing.avatarUrl = row.authorAvatarUrl;
-    }
-  }
-
-  return Array.from(authorsMap.values()).sort((a, b) => {
-    if (b.skillCount !== a.skillCount) {
-      return b.skillCount - a.skillCount;
-    }
-    return a.name.localeCompare(b.name);
-  });
+  return {
+    authors: rows.map(({ slug, name, avatarUrl, skillCount }) => ({
+      slug,
+      // Some frontmatter authors are bare URLs.
+      name: name?.trim() && !name.startsWith("http") ? name.trim() : slug,
+      avatarUrl,
+      skillCount,
+    })),
+    total: rows[0]?.total ?? 0,
+  };
 };
 
-const fetchAuthorsIndexCached = unstable_cache(
-  fetchAuthorsIndexUncached,
-  ["browse:authors-index"],
+const fetchAuthorsPageCached = unstable_cache(
+  fetchAuthorsPageUncached,
+  ["browse:authors-page"],
   { revalidate: BROWSE_REVALIDATE_SECONDS }
 );
 
-export async function fetchAuthorsIndex() {
-  return fetchAuthorsIndexCached();
+export async function fetchAuthorsPage(page: number) {
+  return fetchAuthorsPageCached(page);
 }
 
 const fetchTagsIndexUncached = async () => {

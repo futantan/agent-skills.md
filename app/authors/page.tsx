@@ -1,30 +1,54 @@
+import { PaginationNav } from "@/components/pagination-nav";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
-import { fetchAuthorsIndex } from "@/lib/browse-queries";
+import { AUTHORS_PAGE_SIZE, fetchAuthorsPage } from "@/lib/browse-queries";
 import { siteConfig } from "@/lib/site-config";
+import { parseHubPage } from "@/lib/skill-seo";
 import type { Metadata } from "next";
-import Link from "next/link";
+import { notFound } from "next/navigation";
 
-export const dynamic = "force-dynamic";
+const DESCRIPTION =
+  "Browse every GitHub author we have indexed, and explore their published Agent Skills.";
 
-export const metadata: Metadata = {
-  title: "Agent Skills Authors | Agent Skills",
-  description:
-    "Browse every GitHub author we have indexed, and explore their published Agent Skills.",
-  alternates: {
-    canonical: "/authors",
-  },
-  openGraph: {
-    title: "Agent Skills Authors | Agent Skills",
-    description:
-      "Browse every GitHub author we have indexed, and explore their published Agent Skills.",
-    url: "/authors",
-    type: "website",
-  },
+const authorsPath = (page: number) =>
+  page > 1 ? `/authors?page=${page}` : "/authors";
+
+type AuthorsPageProps = {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
-export default async function AuthorsPage() {
-  const authors = await fetchAuthorsIndex();
+export async function generateMetadata({
+  searchParams,
+}: AuthorsPageProps): Promise<Metadata> {
+  const page = parseHubPage((await searchParams).page);
+  if (!page) {
+    return { robots: { index: false, follow: true } };
+  }
+
+  const title =
+    page > 1
+      ? `Agent Skills Authors, Page ${page} | Agent Skills`
+      : "Agent Skills Authors | Agent Skills";
+  const url = authorsPath(page);
+
+  return {
+    title,
+    description: DESCRIPTION,
+    alternates: { canonical: url },
+    openGraph: { title, description: DESCRIPTION, url, type: "website" },
+  };
+}
+
+export default async function AuthorsPage({ searchParams }: AuthorsPageProps) {
+  const page = parseHubPage((await searchParams).page);
+  if (!page) {
+    notFound();
+  }
+
+  const { authors, total } = await fetchAuthorsPage(page);
+  if (page > 1 && authors.length === 0) {
+    notFound();
+  }
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -54,45 +78,44 @@ export default async function AuthorsPage() {
             No GitHub authors have been indexed yet.
           </div>
         ) : (
-          <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {authors.map((author, index) => (
-              <Link
+          <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {authors.map((author) => (
+              <a
                 key={author.slug}
-                className="group relative flex h-full flex-col gap-5 rounded-[18px] border border-border/60 bg-card p-6 shadow-[0_1px_2px_rgba(15,23,42,0.06)] transition hover:-translate-y-0.5 hover:border-foreground/20 hover:shadow-[0_16px_32px_rgba(15,23,42,0.12)]"
+                className="flex items-center gap-4 rounded-2xl border border-border/60 bg-card p-4 transition hover:border-foreground/20"
                 href={`/authors/${author.slug}`}
-                style={{ animationDelay: `${index * 40}ms` }}
               >
-                <div className="flex items-center gap-4">
-                  {author.avatarUrl ? (
-                    <img
-                      alt={author.name}
-                      className="h-12 w-12 rounded-full border border-border/70 object-cover"
-                      src={author.avatarUrl}
-                    />
-                  ) : (
-                    <div className="flex h-12 w-12 items-center justify-center rounded-full border border-border/70 bg-muted text-sm font-semibold text-foreground">
-                      {author.name.slice(0, 2).toUpperCase()}
-                    </div>
-                  )}
-                  <div>
-                    <p className="text-base font-semibold text-foreground">
-                      {author.name}
-                    </p>
-                    <p className="text-xs uppercase tracking-[0.24em] text-muted-foreground">
-                      {author.skillCount} Skills
-                    </p>
-                  </div>
-                </div>
-                <div className="mt-auto flex items-center justify-between border-t border-border/60 pt-4 text-xs text-muted-foreground">
-                  <span>View skills</span>
-                  <span className="font-medium text-foreground/80 transition group-hover:text-foreground">
-                    Open profile
+                {author.avatarUrl ? (
+                  <img
+                    alt=""
+                    className="h-10 w-10 rounded-full border border-border/70 object-cover"
+                    loading="lazy"
+                    src={author.avatarUrl}
+                  />
+                ) : (
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border/70 bg-muted text-sm font-semibold text-foreground">
+                    {author.name.slice(0, 2).toUpperCase()}
                   </span>
-                </div>
-              </Link>
+                )}
+                <span className="min-w-0">
+                  <span className="block truncate font-semibold text-foreground">
+                    {author.name}
+                  </span>
+                  <span className="block text-xs text-muted-foreground">
+                    {author.skillCount} Skills
+                  </span>
+                </span>
+              </a>
             ))}
           </div>
         )}
+
+        <PaginationNav
+          buildHref={authorsPath}
+          currentPage={page}
+          totalItems={total}
+          totalPages={Math.ceil(total / AUTHORS_PAGE_SIZE)}
+        />
       </main>
 
       <SiteFooter />
