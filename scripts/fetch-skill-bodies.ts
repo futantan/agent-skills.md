@@ -6,6 +6,9 @@
 //   pnpm skills:fetch --dry-run --limit 50  fetch an even sample, write nothing
 //   pnpm skills:fetch --retry-missing       also retry rows that found no body
 //
+// Skills in lib/proven-skills.json are always fetched and retried. One without a
+// body stops being proven, so its group keeps its ordinary primary.
+//
 // Repo file lists come from a blobless git clone (anonymous, cached in the OS
 // temp dir): skill ids hold the frontmatter name, not the path, and the GitHub
 // API is off limits here.
@@ -21,7 +24,13 @@ import { eq, isNotNull, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { reposTable, skillsTable } from "@/db/schema";
 import type { RepoTreeEntry } from "@/lib/github-files";
-import { resolveSkillFilePath, resolveSkillsPath } from "@/lib/skill-path";
+import provenSkills from "@/lib/proven-skills.json";
+import {
+  findSkillFileBySlug,
+  resolveSkillFilePath,
+  resolveSkillsPath,
+  slugifySkillName,
+} from "@/lib/skill-path";
 import {
   countWords,
   hashBody,
@@ -235,11 +244,12 @@ async function fetchCandidate(
     return { outcome: "repo-gone" };
   }
 
-  const path = resolveSkillFilePath({
-    entries: tree,
-    basePath: resolveSkillsPath(row.skillsPath),
-    skillName: row.name,
-  });
+  const path =
+    resolveSkillFilePath({
+      entries: tree,
+      basePath: resolveSkillsPath(row.skillsPath),
+      skillName: row.name,
+    }) ?? findSkillFileBySlug(tree, row.name);
   if (!path) {
     await markFetched({});
     return { outcome: "path-unresolved" };
@@ -255,7 +265,7 @@ async function fetchCandidate(
   }
 
   const fileName = parseFrontmatter(contents).name;
-  if (fileName?.toLowerCase() !== row.name.toLowerCase()) {
+  if (slugifySkillName(fileName ?? "") !== slugifySkillName(row.name)) {
     await markFetched({});
     return { outcome: "name-mismatch", path };
   }
@@ -333,17 +343,28 @@ async function main() {
     .from(skillsTable)
     .innerJoin(reposTable, eq(reposTable.id, skillsTable.repoId));
 
-  const { candidates, primaryOf } = rankCandidates(rows);
   const byId = new Map(rows.map((row) => [row.id, row]));
+  const proven = provenSkills.filter((id) => byId.has(id));
+  const provenIds = new Set(proven);
+  const candidates = [
+    ...new Set([
+      ...proven,
+      ...rankCandidates(rows, proven).candidates.map(({ id }) => id),
+      ...rankCandidates(rows).candidates.map(({ id }) => id),
+    ]),
+  ];
   const pending = candidates
-    .map((candidate) => byId.get(candidate.id)!)
+    .map((id) => byId.get(id)!)
     .filter(
-      (row) => !row.bodyFetchedAt || (retryMissing && row.bodyHash === null)
+      (row) =>
+        !row.bodyFetchedAt ||
+        ((retryMissing || provenIds.has(row.id)) && row.bodyHash === null)
     );
   const batch = limit ? everyNth(pending, limit) : pending;
 
   console.log({
     skills: rows.length,
+    proven: `${proven.length}/${provenSkills.length}`,
     candidates: candidates.length,
     pending: pending.length,
     batch: batch.length,
@@ -417,6 +438,15 @@ async function main() {
       [...outcomes].map(([outcome, ids]) => [outcome, ids.length])
     ),
   });
+  console.log(
+    "proven outcomes",
+    Object.fromEntries(
+      [...outcomes].map(([outcome, ids]) => [
+        outcome,
+        ids.filter((id) => provenIds.has(id)).length,
+      ])
+    )
+  );
   for (const outcome of [
     "path-unresolved",
     "http-404",
@@ -444,10 +474,14 @@ async function main() {
     return;
   }
 
+  const bodies = await loadBodies();
+  const retrievable = proven.filter((id) => (bodies.get(id)?.words ?? 0) > 0);
+  const ranked = rankCandidates(rows, retrievable);
   const { selected, dropped, canonical } = selectIndexable(
-    candidates,
-    primaryOf,
-    await loadBodies()
+    ranked.candidates,
+    ranked.primaryOf,
+    bodies,
+    retrievable
   );
   await writeSelection(selected, canonical);
   console.log({
@@ -456,6 +490,8 @@ async function main() {
       Object.entries(dropped).map(([reason, ids]) => [reason, ids.length])
     ),
     canonical: canonical.size,
+    provenRetrievable: retrievable.length,
+    provenCopies: retrievable.filter((id) => canonical.has(id)).length,
   });
 }
 

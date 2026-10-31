@@ -51,14 +51,22 @@ function characterCount(value: string) {
 }
 
 // Ranks every skill once: the first row seen in a group is its primary, and the
-// filters and repo cap then apply to primaries only.
-export function rankCandidates(rows: SkillRow[]) {
+// filters and repo cap then apply to primaries only. Proven ids, in priority
+// order, rank first and skip the filters.
+export function rankCandidates(rows: SkillRow[], proven: string[] = []) {
+  const priority = new Map(proven.map((id, index) => [id, index]));
+  const priorityOf = ({ id }: SkillRow) => priority.get(id) ?? proven.length;
   const primaryByGroup = new Map<string, SkillRow>();
   const primaryOf = new Map<string, string>();
   const repoCounts = new Map<string, number>();
   const candidates: SkillRow[] = [];
 
-  for (const row of [...rows].sort(compareRank)) {
+  const ranked = [...rows].sort(
+    (left, right) =>
+      priorityOf(left) - priorityOf(right) || compareRank(left, right)
+  );
+
+  for (const row of ranked) {
     const key = groupKey(row);
     const primary = primaryByGroup.get(key);
     if (primary) {
@@ -67,16 +75,18 @@ export function rankCandidates(rows: SkillRow[]) {
     }
     primaryByGroup.set(key, row);
 
+    const isProven = priority.has(row.id);
     if (
-      row.stars < MIN_REPO_STARS ||
-      characterCount(row.description.trim()) < MIN_DESCRIPTION_LENGTH
+      !isProven &&
+      (row.stars < MIN_REPO_STARS ||
+        characterCount(row.description.trim()) < MIN_DESCRIPTION_LENGTH)
     ) {
       continue;
     }
 
     const repoKey = row.repoId.toLowerCase();
     const repoCount = repoCounts.get(repoKey) ?? 0;
-    if (repoCount >= MAX_PER_REPO) {
+    if (!isProven && repoCount >= MAX_PER_REPO) {
       continue;
     }
     repoCounts.set(repoKey, repoCount + 1);
@@ -90,7 +100,8 @@ export function rankCandidates(rows: SkillRow[]) {
 export function selectIndexable(
   candidates: SkillRow[],
   primaryOf: Map<string, string>,
-  bodies: Map<string, SkillBody>
+  bodies: Map<string, SkillBody>,
+  proven: string[] = []
 ): Selection {
   const dropped: Selection["dropped"] = {
     noBody: [],
@@ -100,11 +111,15 @@ export function selectIndexable(
   };
   const selected: string[] = [];
   const seenHashes = new Set<string>();
+  const provenIds = new Set(proven);
 
   for (const { id } of candidates) {
     const body = bodies.get(id);
     if (!body) {
       dropped.noBody.push(id);
+    } else if (provenIds.has(id) && body.words > 0) {
+      seenHashes.add(body.hash);
+      selected.push(id);
     } else if (body.words < MIN_BODY_WORDS) {
       dropped.tooShort.push(id);
     } else if (seenHashes.has(body.hash)) {

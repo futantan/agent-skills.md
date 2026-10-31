@@ -93,6 +93,30 @@ export function resolveSkillFilePath({
   return null;
 }
 
+export function slugifySkillName(name: string) {
+  return name
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}]+/gu, "-")
+    .replace(/^-|-$/g, "");
+}
+
+// For skills named by display name, whose folder is the slug of that name, and
+// for repos holding one skill. The caller checks the file's frontmatter name.
+export function findSkillFileBySlug(entries: RepoTreeEntry[], name: string) {
+  const skillFiles = entries.filter(
+    ({ path, type }) =>
+      type === "blob" && (path === "SKILL.md" || path.endsWith("/SKILL.md"))
+  );
+  if (skillFiles.length === 1) {
+    return skillFiles[0].path;
+  }
+  const slug = slugifySkillName(name);
+  const matches = skillFiles.filter(
+    ({ path }) => path.split("/").at(-2)?.toLowerCase() === slug
+  );
+  return matches.length === 1 ? matches[0].path : null;
+}
+
 function hasSkillDirectory(entries: RepoTreeEntry[], prefix: string) {
   const normalizedPrefix = normalizePath(prefix);
   if (!normalizedPrefix) {

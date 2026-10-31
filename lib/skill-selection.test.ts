@@ -263,3 +263,94 @@ describe("body helpers", () => {
     expect(hashBody("a")).toMatch(/^[0-9a-f]{64}$/);
   });
 });
+
+describe("proven skills", () => {
+  const shared = { name: "shared", description: DESCRIPTION };
+
+  it("makes a proven skill a candidate despite stars and description", () => {
+    const lowStars = skill({ stars: 3 });
+    const shortDescription = skill({ description: "short" });
+
+    const { candidates } = rankCandidates(
+      [lowStars, shortDescription],
+      [lowStars.id, shortDescription.id]
+    );
+
+    expect(ids(candidates)).toEqual([lowStars.id, shortDescription.id]);
+  });
+
+  it("makes a proven skill the primary of its group", () => {
+    const popular = skill({ ...shared, stars: 90000 });
+    const proven = skill({ ...shared, stars: 3 });
+
+    const { candidates, primaryOf } = rankCandidates(
+      [popular, proven],
+      [proven.id]
+    );
+
+    expect(ids(candidates)).toEqual([proven.id]);
+    expect(primaryOf.get(popular.id)).toBe(proven.id);
+  });
+
+  it("lets the earlier proven id win when two share a group", () => {
+    const first = skill({ ...shared, stars: 3 });
+    const second = skill({ ...shared, stars: 90000 });
+
+    const { candidates, primaryOf } = rankCandidates(
+      [second, first],
+      [first.id, second.id]
+    );
+
+    expect(ids(candidates)).toEqual([first.id]);
+    expect(primaryOf.get(second.id)).toBe(first.id);
+  });
+
+  it("ranks proven skills ahead of the repo limit and the cap", () => {
+    const rows = Array.from({ length: 101 }, () =>
+      skill({ repoId: "owner/big", stars: 9000 })
+    );
+    const proven = skill({ repoId: "owner/big", stars: 5 });
+
+    const { candidates } = rankCandidates([...rows, proven], [proven.id]);
+
+    expect(candidates).toHaveLength(100);
+    expect(candidates[0].id).toBe(proven.id);
+  });
+
+  it("keeps a proven skill with a short body or a duplicate body", () => {
+    const first = skill();
+    const short = skill();
+    const duplicate = skill();
+    const ordinary = skill();
+    const sameBody = body(LONG_BODY);
+
+    const { selected, dropped } = selectIndexable(
+      [first, short, duplicate, ordinary],
+      new Map(),
+      new Map([
+        [first.id, sameBody],
+        [short.id, body("only a few words")],
+        [duplicate.id, sameBody],
+        [ordinary.id, sameBody],
+      ]),
+      [first.id, short.id, duplicate.id]
+    );
+
+    expect(selected).toEqual([first.id, short.id, duplicate.id]);
+    expect(dropped.duplicateBody).toEqual([ordinary.id]);
+  });
+
+  it("still drops a proven skill whose body is empty", () => {
+    const empty = skill();
+
+    const { selected, dropped } = selectIndexable(
+      [empty],
+      new Map(),
+      new Map([[empty.id, body("")]]),
+      [empty.id]
+    );
+
+    expect(selected).toEqual([]);
+    expect(dropped.tooShort).toEqual([empty.id]);
+  });
+});
