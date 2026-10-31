@@ -31,9 +31,7 @@ export async function generateMetadata({
   return {
     title: `${decodedCategory} | Agent Skills`,
     description,
-    alternates: {
-      canonical: `/categories/${decodedCategory}`,
-    },
+    robots: { index: false, follow: true },
     openGraph: {
       title: `${decodedCategory} | Agent Skills`,
       description,

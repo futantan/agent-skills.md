@@ -31,9 +31,7 @@ export async function generateMetadata({
   return {
     title: `${displayName} | Agent Skills`,
     description,
-    alternates: {
-      canonical: `/authors/${decodedAuthor}`,
-    },
+    robots: { index: false, follow: true },
     openGraph: {
       title: `${displayName} | Agent Skills`,
       description,
