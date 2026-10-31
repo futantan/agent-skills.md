@@ -69,7 +69,6 @@ export default async function TagsPage({ searchParams }: TagsPageProps) {
       <main className="relative mx-auto container flex-1 px-6 pt-12 pb-16">
         <script
           type="application/ld+json"
-          // eslint-disable-next-line react/no-danger
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
         <div className="pointer-events-none absolute inset-0 -z-10">
