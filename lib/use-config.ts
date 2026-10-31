@@ -9,7 +9,7 @@ type Config = {
 
 const configAtom = atomWithStorage<Config>("config", {
   style: "new-york-v4",
-  packageManager: "pnpm",
+  packageManager: "npm",
   installationType: "cli",
 })
 

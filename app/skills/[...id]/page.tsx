@@ -5,10 +5,17 @@ import { SiteHeader } from "@/components/site-header";
 import { SkillFilesExplorer } from "@/components/skill-files-explorer";
 import { client } from "@/lib/api/orpc";
 import { getAuthorSlug } from "@/lib/author-utils";
+import {
+  buildInstallCommands,
+  isRealCategory,
+  skillIndexing,
+  skillPath,
+} from "@/lib/skill-seo";
 import { GitFork, Github, Star } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { cache } from "react";
 
 export const revalidate = 86400;
 
@@ -16,22 +23,30 @@ type SkillDetailPageProps = {
   params: Promise<{ id: string | string[] }>;
 };
 
-async function fetchSkillMarkdown(skillId: string) {
-  const preview = (await client.skills.markdown({ id: skillId })) as {
-    path: string;
-    content: string;
-  } | null;
+const fetchSkill = cache((id: string) => client.skills.find({ id }));
+
+const fetchSkillMarkdown = cache(async (skillId: string) => {
+  const skill = await fetchSkill(skillId);
+  const preview =
+    skill?.body && skill.bodyPath
+      ? { path: skill.bodyPath, content: skill.body }
+      : ((await client.skills.markdown({ id: skillId })) as {
+          path: string;
+          content: string;
+        } | null);
   if (!preview?.content) {
     return null;
   }
-  const { frontmatter, content } = parseFrontmatter(preview.content);
+  const { frontmatter, content } = parseFrontmatter(
+    preview.content.replaceAll("\r\n", "\n")
+  );
   return {
     path: preview.path,
     content,
     title: extractMarkdownTitle(content),
     frontmatter,
   };
-}
+});
 
 type SkillFrontmatter = {
   name?: string;
@@ -59,7 +74,10 @@ function parseFrontmatter(value: string): {
     if (colonIndex === -1) continue;
 
     const key = line.slice(0, colonIndex).trim();
-    const val = line.slice(colonIndex + 1).trim();
+    const val = line
+      .slice(colonIndex + 1)
+      .trim()
+      .replace(/^(["'])(.*)\1$/, "$2");
 
     if (key === "name") frontmatter.name = val;
     else if (key === "description") frontmatter.description = val;
@@ -73,36 +91,6 @@ function extractMarkdownTitle(value: string) {
   return match?.[1]?.trim() ?? null;
 }
 
-function buildInstallSource({
-  repoUrl,
-  repoId,
-  markdownPath,
-  fallbackSkillId,
-}: {
-  repoUrl?: string | null;
-  repoId: string;
-  markdownPath?: string | null;
-  fallbackSkillId: string;
-}) {
-  const baseRepoUrl = (repoUrl ?? `https://github.com/${repoId}`).replace(
-    /\/+$/,
-    ""
-  );
-  const normalizedPath = (markdownPath ?? "").replace(/^\/+/, "");
-  const skillDir = normalizedPath.replace(/\/SKILL\.md$/i, "");
-
-  if (skillDir && skillDir !== normalizedPath) {
-    const encodedPath = skillDir
-      .split("/")
-      .filter(Boolean)
-      .map((segment) => encodeURIComponent(segment))
-      .join("/");
-    return `${baseRepoUrl}/tree/HEAD/${encodedPath}`;
-  }
-
-  return `https://github.com/${fallbackSkillId}`;
-}
-
 export async function generateMetadata({
   params,
 }: SkillDetailPageProps): Promise<Metadata> {
@@ -111,7 +99,7 @@ export async function generateMetadata({
   const decodedId = decodeURIComponent(rawId);
   const normalizedId = decodedId.replace(/^\/?skills\//, "");
   const [skill, markdownPreview] = await Promise.all([
-    client.skills.find({ id: normalizedId }),
+    fetchSkill(normalizedId),
     fetchSkillMarkdown(normalizedId),
   ]);
   const displayTitle =
@@ -126,13 +114,15 @@ export async function generateMetadata({
   return {
     title,
     description,
-    alternates: {
-      canonical: `/skills/${normalizedId}`,
-    },
+    ...skillIndexing({
+      id: normalizedId,
+      indexable: skill?.indexable ?? false,
+      primaryId: skill?.primaryId ?? null,
+    }),
     openGraph: {
       title,
       description,
-      url: `/skills/${normalizedId}`,
+      url: skillPath(normalizedId),
       type: "article",
     },
   };
@@ -147,13 +137,20 @@ export default async function SkillDetailPage({
   // decodedId is /skills/anthropics/skills/algorithmic-art
   // but the id in db is anthropics/skills/algorithmic-art
   const normalizedId = decodedId.replace(/^\/?skills\//, "");
-  const skill = await client.skills.find({ id: normalizedId });
+  const skill = await fetchSkill(normalizedId);
 
   if (!skill) {
     notFound();
   }
 
-  const markdownPreview = await fetchSkillMarkdown(normalizedId);
+  const [markdownPreview, relatedSkills] = await Promise.all([
+    fetchSkillMarkdown(normalizedId),
+    client.skills.related({
+      id: skill.id,
+      repoId: skill.repoId,
+      tags: skill.tags,
+    }),
+  ]);
   const displayTitle =
     markdownPreview?.title ?? skill.name ?? normalizedId.replace(/[-_]/g, " ");
 
@@ -164,12 +161,7 @@ export default async function SkillDetailPage({
   const repoStars = skill.repoStars ?? 0;
   const repoForks = skill.repoForks ?? 0;
   const showRepoStats = repoStars > 0;
-  const installSource = buildInstallSource({
-    repoUrl: skill.repoUrl,
-    repoId: skill.repoId,
-    markdownPath: markdownPreview?.path,
-    fallbackSkillId: skill.id,
-  });
+  const installCommands = buildInstallCommands(repoLabel, skill.name);
   const authorSlug = getAuthorSlug({
     name: skill.authorName,
     url: skill.authorUrl,
@@ -207,7 +199,7 @@ export default async function SkillDetailPage({
               ) : null}
 
               <div className="mt-6 flex flex-wrap items-center gap-2 sm:mt-8 sm:gap-3">
-                {skill.category ? (
+                {isRealCategory(skill.category) ? (
                   <span className="inline-flex items-center rounded-full border border-border/60 bg-muted/40 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground sm:px-3 sm:py-1 sm:text-xs sm:tracking-widest">
                     {skill.category}
                   </span>
@@ -350,10 +342,10 @@ export default async function SkillDetailPage({
             Install this agent skill to your local
           </h3>
           <CodeBlockCommand
-            __bun__={`bunx add-skill ${installSource}`}
-            __npm__={`npx add-skill ${installSource}`}
-            __pnpm__={`pnpm dlx add-skill ${installSource}`}
-            __yarn__={`yarn dlx add-skill ${installSource}`}
+            __bun__={installCommands.bun}
+            __npm__={installCommands.npm}
+            __pnpm__={installCommands.pnpm}
+            __yarn__={installCommands.yarn}
           />
         </section>
 
@@ -373,6 +365,31 @@ export default async function SkillDetailPage({
           initialSelectedPath={markdownPreview?.path ?? null}
           initialFrontmatter={markdownPreview?.frontmatter ?? null}
         />
+
+        {relatedSkills.length > 0 ? (
+          <section className="py-6">
+            <h2 className="text-lg font-semibold text-foreground">
+              More agent skills
+            </h2>
+            <ul className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {relatedSkills.map((related) => (
+                <li key={related.id}>
+                  <Link
+                    className="group block h-full rounded-2xl border border-border/40 bg-card/50 p-4 transition hover:border-border hover:bg-card"
+                    href={skillPath(related.id)}
+                  >
+                    <span className="block font-semibold text-foreground transition-colors group-hover:text-primary">
+                      {related.name}
+                    </span>
+                    <span className="mt-1 line-clamp-2 block text-sm text-muted-foreground">
+                      {related.description}
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ) : null}
       </main>
 
       <SiteFooter />

@@ -14,9 +14,21 @@ import {
   resolveSkillPrefixFromTree,
   resolveSkillsPath,
 } from "@/lib/skill-path";
+import { SKILL_HUB_PAGE_SIZE } from "@/lib/skill-seo";
 import { DEFAULT_PAGE_SIZE } from "@/lib/skills-pagination";
 import { os } from "@orpc/server";
-import { desc, eq, ilike, or, sql, type SQL } from "drizzle-orm";
+import {
+  and,
+  desc,
+  eq,
+  ilike,
+  ne,
+  notInArray,
+  or,
+  sql,
+  type SQL,
+} from "drizzle-orm";
+import { alias } from "drizzle-orm/pg-core";
 import * as z from "zod";
 
 const paginationInput = z.object({
@@ -83,7 +95,8 @@ async function fetchSkillsPage({
     .leftJoin(reposTable, eq(skillsTable.repoId, reposTable.id))
     .orderBy(
       desc(sql`coalesce(${reposTable.stars}, 0)`),
-      desc(skillsTable.updatedAt)
+      desc(skillsTable.updatedAt),
+      skillsTable.id
     )
     .limit(pageSize)
     .offset(offset);
@@ -147,6 +160,18 @@ const searchSkills = os
     });
   });
 
+const listIndexableSkills = os
+  .input(z.object({ page: z.number().int().min(1) }))
+  .handler(async ({ input }) => {
+    return fetchSkillsPage({
+      where: eq(skillsTable.indexable, true),
+      page: input.page,
+      pageSize: SKILL_HUB_PAGE_SIZE,
+    });
+  });
+
+const primarySkills = alias(skillsTable, "primary_skills");
+
 const findSkill = os
   .input(z.object({ id: z.string() }))
   .handler(async ({ input }) => {
@@ -172,12 +197,83 @@ const findSkill = os
         repoOwnerName: reposTable.ownerName,
         repoOwnerUrl: reposTable.ownerUrl,
         repoOwnerAvatarUrl: reposTable.ownerAvatarUrl,
+        body: skillsTable.body,
+        bodyPath: skillsTable.bodyPath,
+        indexable: skillsTable.indexable,
+        primaryId: primarySkills.id,
       })
       .from(skillsTable)
       .leftJoin(reposTable, eq(skillsTable.repoId, reposTable.id))
+      .leftJoin(
+        primarySkills,
+        and(
+          eq(primarySkills.id, skillsTable.canonicalSkillId),
+          eq(primarySkills.indexable, true)
+        )
+      )
       .where(eq(skillsTable.id, input.id))
       .limit(1);
     return row;
+  });
+
+const RELATED_SKILLS_LIMIT = 6;
+
+const relatedSkills = os
+  .input(
+    z.object({
+      id: z.string(),
+      repoId: z.string(),
+      tags: z.array(z.string()),
+    })
+  )
+  .handler(async ({ input }) => {
+    // Hashing with the page id spreads links across the set; the same page
+    // always gets the same picks.
+    const query = (where: SQL | undefined, limit: number) =>
+      db
+        .select({
+          id: skillsTable.id,
+          name: skillsTable.name,
+          description: skillsTable.description,
+        })
+        .from(skillsTable)
+        .where(
+          and(
+            eq(skillsTable.indexable, true),
+            ne(skillsTable.id, input.id),
+            where
+          )
+        )
+        .orderBy(sql`md5(${skillsTable.id} || ${input.id})`)
+        .limit(limit);
+
+    const sameRepo = await query(
+      eq(skillsTable.repoId, input.repoId),
+      RELATED_SKILLS_LIMIT
+    );
+    const otherRepos = ne(skillsTable.repoId, input.repoId);
+    const sharedTag =
+      sameRepo.length < RELATED_SKILLS_LIMIT && input.tags.length > 0
+        ? await query(
+            and(
+              otherRepos,
+              sql`${skillsTable.tags} && ${sql.param(input.tags, skillsTable.tags)}`
+            ),
+            RELATED_SKILLS_LIMIT - sameRepo.length
+          )
+        : [];
+    const related = [...sameRepo, ...sharedTag];
+
+    // Few skills have tags, so fill up to keep every page linking onward.
+    const seen = related.map(({ id }) => id);
+    const filler =
+      related.length < RELATED_SKILLS_LIMIT
+        ? await query(
+            and(otherRepos, notInArray(skillsTable.id, seen)),
+            RELATED_SKILLS_LIMIT - related.length
+          )
+        : [];
+    return [...related, ...filler];
   });
 
 const authorSummary = os.input(authorInput).handler(async ({ input }) => {
@@ -583,8 +679,10 @@ const skillMarkdown = os
 export const router = {
   skills: {
     list: listSkills,
+    listIndexable: listIndexableSkills,
     search: searchSkills,
     find: findSkill,
+    related: relatedSkills,
     tree: skillTree,
     file: skillFile,
     markdown: skillMarkdown,
