@@ -71,6 +71,28 @@ export function resolveSkillPrefixFromTree({
   return ranked[0].candidate;
 }
 
+// `skillName` is the frontmatter name, which is usually but not always the
+// directory name. Returns null when no such SKILL.md exists in the tree.
+export function resolveSkillFilePath({
+  entries,
+  basePath,
+  skillName,
+}: {
+  entries: RepoTreeEntry[];
+  basePath: string;
+  skillName: string;
+}) {
+  const unnamespaced = skillName.slice(skillName.lastIndexOf(":") + 1);
+  for (const skillDir of new Set([skillName, unnamespaced])) {
+    const prefix = resolveSkillPrefixFromTree({ entries, basePath, skillDir });
+    const path = `${prefix}/SKILL.md`;
+    if (entries.some((entry) => entry.type === "blob" && entry.path === path)) {
+      return path;
+    }
+  }
+  return null;
+}
+
 function hasSkillDirectory(entries: RepoTreeEntry[], prefix: string) {
   const normalizedPrefix = normalizePath(prefix);
   if (!normalizedPrefix) {

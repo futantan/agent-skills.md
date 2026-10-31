@@ -224,7 +224,7 @@ export function parseGitHubRepo(input: string): ParsedRepo | null {
   }
 }
 
-function parseFrontmatter(contents: string): SkillFrontmatter {
+export function parseFrontmatter(contents: string): SkillFrontmatter {
   const lines = contents.split("\n");
   if (lines[0]?.trim() !== "---") {
     return {};

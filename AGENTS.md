@@ -19,6 +19,8 @@
 - `pnpm db:generate` creates Drizzle migration files from schema changes.
 - `pnpm db:migrate` applies migrations to the target database.
 - `pnpm db:push` pushes schema changes directly to the database.
+- `pnpm test` runs the Vitest suite.
+- `pnpm skills:fetch` fetches SKILL.md bodies for candidates and writes the indexable selection (rerunnable).
 
 ## Coding Style & Naming Conventions
 
@@ -29,8 +31,7 @@
 
 ## Testing Guidelines
 
-- No automated test runner is configured in this repo yet.
-- If you add tests, introduce a script in `package.json`, document it here, and follow the naming pattern used by the chosen framework (for example `*.test.tsx`).
+- `pnpm test` runs Vitest. Tests sit next to the code as `*.test.ts` and cover pure logic.
 
 ## Commit & Pull Request Guidelines
 
