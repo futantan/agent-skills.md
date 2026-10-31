@@ -51,19 +51,18 @@ function characterCount(value: string) {
 }
 
 // Ranks every skill once: the first row seen in a group is its primary, and the
-// filters and repo cap then apply to primaries only. Proven ids, in priority
-// order, rank first and skip the filters.
+// filters and repo cap then apply to primaries only. Proven ids rank first and
+// skip the filters; the ordinary ranking orders them among themselves.
 export function rankCandidates(rows: SkillRow[], proven: string[] = []) {
-  const priority = new Map(proven.map((id, index) => [id, index]));
-  const priorityOf = ({ id }: SkillRow) => priority.get(id) ?? proven.length;
+  const provenIds = new Set(proven);
+  const tier = ({ id }: SkillRow) => (provenIds.has(id) ? 0 : 1);
   const primaryByGroup = new Map<string, SkillRow>();
   const primaryOf = new Map<string, string>();
   const repoCounts = new Map<string, number>();
   const candidates: SkillRow[] = [];
 
   const ranked = [...rows].sort(
-    (left, right) =>
-      priorityOf(left) - priorityOf(right) || compareRank(left, right)
+    (left, right) => tier(left) - tier(right) || compareRank(left, right)
   );
 
   for (const row of ranked) {
@@ -75,7 +74,7 @@ export function rankCandidates(rows: SkillRow[], proven: string[] = []) {
     }
     primaryByGroup.set(key, row);
 
-    const isProven = priority.has(row.id);
+    const isProven = provenIds.has(row.id);
     if (
       !isProven &&
       (row.stars < MIN_REPO_STARS ||

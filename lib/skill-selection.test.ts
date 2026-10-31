@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import provenSkills from "./proven-skills.json";
 import {
   MAX_INDEXABLE,
   countWords,
@@ -276,7 +277,7 @@ describe("proven skills", () => {
       [lowStars.id, shortDescription.id]
     );
 
-    expect(ids(candidates)).toEqual([lowStars.id, shortDescription.id]);
+    expect(ids(candidates)).toEqual([shortDescription.id, lowStars.id]);
   });
 
   it("makes a proven skill the primary of its group", () => {
@@ -292,17 +293,32 @@ describe("proven skills", () => {
     expect(primaryOf.get(popular.id)).toBe(proven.id);
   });
 
-  it("lets the earlier proven id win when two share a group", () => {
-    const first = skill({ ...shared, stars: 3 });
-    const second = skill({ ...shared, stars: 90000 });
+  it("breaks ties between proven twins by the ordinary ranking", () => {
+    const low = skill({ ...shared, stars: 3 });
+    const high = skill({ ...shared, stars: 90000 });
 
-    const { candidates, primaryOf } = rankCandidates(
-      [second, first],
-      [first.id, second.id]
-    );
+    for (const proven of [
+      [low.id, high.id],
+      [high.id, low.id],
+    ]) {
+      const { candidates, primaryOf } = rankCandidates([low, high], proven);
 
-    expect(ids(candidates)).toEqual([first.id]);
-    expect(primaryOf.get(second.id)).toBe(first.id);
+      expect(ids(candidates)).toEqual([high.id]);
+      expect(primaryOf.get(low.id)).toBe(high.id);
+    }
+  });
+
+  it("orders proven skills by the ordinary ranking, not list position", () => {
+    const low = skill({ stars: 3 });
+    const high = skill({ stars: 90000 });
+
+    const { candidates } = rankCandidates([low, high], [low.id, high.id]);
+
+    expect(ids(candidates)).toEqual([high.id, low.id]);
+  });
+
+  it("keeps the proven list sorted, so it carries no ranking", () => {
+    expect(provenSkills).toEqual([...new Set(provenSkills)].sort());
   });
 
   it("ranks proven skills ahead of the repo limit and the cap", () => {
