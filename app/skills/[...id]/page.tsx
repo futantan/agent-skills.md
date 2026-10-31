@@ -8,6 +8,7 @@ import { getAuthorSlug } from "@/lib/author-utils";
 import {
   buildInstallCommands,
   isRealCategory,
+  skillGithubUrl,
   skillIndexing,
   skillPath,
 } from "@/lib/skill-seo";
@@ -27,21 +28,14 @@ const fetchSkill = cache((id: string) => client.skills.find({ id }));
 
 const fetchSkillMarkdown = cache(async (skillId: string) => {
   const skill = await fetchSkill(skillId);
-  const preview =
-    skill?.body && skill.bodyPath
-      ? { path: skill.bodyPath, content: skill.body }
-      : ((await client.skills.markdown({ id: skillId })) as {
-          path: string;
-          content: string;
-        } | null);
-  if (!preview?.content) {
+  if (!skill?.body || !skill.bodyPath) {
     return null;
   }
   const { frontmatter, content } = parseFrontmatter(
-    preview.content.replaceAll("\r\n", "\n")
+    skill.body.replaceAll("\r\n", "\n")
   );
   return {
-    path: preview.path,
+    path: skill.bodyPath,
     content,
     title: extractMarkdownTitle(content),
     frontmatter,
@@ -352,6 +346,7 @@ export default async function SkillDetailPage({
         <SkillFilesExplorer
           skillId={skill.id}
           skillName={skill.name}
+          githubUrl={skillGithubUrl(skill.repoId, skill.bodyPath)}
           initialPreview={
             markdownPreview
               ? {

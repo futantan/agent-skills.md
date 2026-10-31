@@ -4,9 +4,11 @@ import {
   buildInstallCommands,
   isRealCategory,
   parseHubPage,
+  skillGithubUrl,
   skillHubPath,
   skillIndexing,
   skillPath,
+  summarize,
 } from "./skill-seo";
 
 describe("skillPath", () => {
@@ -93,5 +95,38 @@ describe("skillHubPath", () => {
   it("drops the query on page 1", () => {
     expect(skillHubPath(1)).toBe("/skills");
     expect(skillHubPath(3)).toBe("/skills?page=3");
+  });
+});
+
+describe("skillGithubUrl", () => {
+  it("points at the folder holding a known SKILL.md", () => {
+    expect(skillGithubUrl("o/r", "skills/pdf/SKILL.md")).toBe(
+      "https://github.com/o/r/tree/HEAD/skills/pdf"
+    );
+  });
+
+  it("encodes path segments, keeping the slashes", () => {
+    expect(skillGithubUrl("o/r", "my skills/a#b/SKILL.md")).toBe(
+      "https://github.com/o/r/tree/HEAD/my%20skills/a%23b"
+    );
+  });
+
+  it("falls back to the repo for a root file or an unknown path", () => {
+    expect(skillGithubUrl("o/r", "SKILL.md")).toBe("https://github.com/o/r");
+    expect(skillGithubUrl("o/r", null)).toBe("https://github.com/o/r");
+  });
+});
+
+describe("summarize", () => {
+  it("leaves short text alone, trimmed", () => {
+    expect(summarize("  short text  ", 20)).toBe("short text");
+  });
+
+  it("cuts at a word boundary and marks the cut", () => {
+    expect(summarize("one two three four", 10)).toBe("one two…");
+  });
+
+  it("cuts a single long word at the limit", () => {
+    expect(summarize("x".repeat(30), 10)).toBe(`${"x".repeat(10)}…`);
   });
 });

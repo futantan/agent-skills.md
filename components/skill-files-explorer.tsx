@@ -37,6 +37,7 @@ type SkillFrontmatter = {
 type SkillFilesExplorerProps = {
   skillId: string;
   skillName: string;
+  githubUrl: string;
   initialPreview?: FilePreview | null;
   initialSelectedPath?: string | null;
   initialFrontmatter?: SkillFrontmatter | null;
@@ -45,6 +46,7 @@ type SkillFilesExplorerProps = {
 export function SkillFilesExplorer({
   skillId,
   skillName,
+  githubUrl,
   initialPreview = null,
   initialSelectedPath = null,
   initialFrontmatter = null,
@@ -54,14 +56,12 @@ export function SkillFilesExplorer({
     .map((segment) => encodeURIComponent(segment))
     .join("/");
   const [root, setRoot] = useState<FileNode | null>(null);
-  const [treeError, setTreeError] = useState<string | null>(null);
   const [treeLoading, setTreeLoading] = useState(true);
   const [selectedPath, setSelectedPath] = useState<string | null>(
     initialSelectedPath
   );
   const [preview, setPreview] = useState<FilePreview | null>(initialPreview);
   const [previewLoading, setPreviewLoading] = useState(false);
-  const [previewError, setPreviewError] = useState<string | null>(null);
 
   const handleSelectFile = useCallback(
     async (node: FileNode) => {
@@ -71,7 +71,6 @@ export function SkillFilesExplorer({
       setSelectedPath(node.path);
       setPreview(null);
       setPreviewLoading(true);
-      setPreviewError(null);
 
       try {
         const data = (await client.skills.file({
@@ -79,12 +78,8 @@ export function SkillFilesExplorer({
           path: node.path,
         })) as FilePreview;
         setPreview(data);
-      } catch (error) {
-        const message =
-          error instanceof Error
-            ? error.message
-            : "Unable to load file preview.";
-        setPreviewError(message);
+      } catch {
+        // The panel below links to GitHub instead.
       } finally {
         setPreviewLoading(false);
       }
@@ -96,20 +91,13 @@ export function SkillFilesExplorer({
     let mounted = true;
     const loadTree = async () => {
       setTreeLoading(true);
-      setTreeError(null);
       try {
         const data = (await client.skills.tree({ id: skillId })) as {
           root: FileNode;
         };
         setRoot(data.root);
-      } catch (error) {
-        if (mounted) {
-          const message =
-            error instanceof Error
-              ? error.message
-              : "Unable to load file tree.";
-          setTreeError(message);
-        }
+      } catch {
+        // The browser is optional: the body and the GitHub link stand alone.
       } finally {
         if (mounted) {
           setTreeLoading(false);
@@ -133,59 +121,72 @@ export function SkillFilesExplorer({
     }
   }, [handleSelectFile, root, selectedPath]);
 
+  const showTree = treeLoading || root;
+
   return (
     <section className="mt-10 rounded-2xl bg-card/40">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h2 className="text-lg font-semibold text-foreground">Skill Files</h2>
           <p className="mt-2 text-sm text-muted-foreground">
-            Browse the full folder contents for {skillName}.
+            The files that make up {skillName}.
           </p>
         </div>
         <a
           className="inline-flex items-center rounded-full bg-primary px-5 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-primary-foreground shadow-lg shadow-primary/30 transition hover:bg-primary/90"
           href={`/api/skills/download/${downloadId}`}
+          rel="nofollow"
         >
           Download Skill
         </a>
       </div>
 
-      <div className="mt-5 grid gap-5 sm:mt-6 sm:gap-6 lg:grid-cols-[0.6fr_2fr]">
-        <div className="rounded-2xl border border-border/50 bg-background/40 p-2 sm:p-3 md:p-4">
-          {treeLoading ? (
-            <p className="text-sm text-muted-foreground">Loading file tree…</p>
-          ) : treeError ? (
-            <p className="text-sm text-destructive">{treeError}</p>
-          ) : root ? (
-            <TreeNode
-              node={root}
-              depth={0}
-              onSelect={handleSelectFile}
-              selectedPath={selectedPath}
-            />
-          ) : (
-            <p className="text-sm text-muted-foreground">
-              No files were found for this skill.
-            </p>
-          )}
-        </div>
+      <div
+        className={`mt-5 grid gap-5 sm:mt-6 sm:gap-6 ${
+          showTree ? "lg:grid-cols-[0.6fr_2fr]" : ""
+        }`}
+      >
+        {showTree ? (
+          <div className="rounded-2xl border border-border/50 bg-background/40 p-2 sm:p-3 md:p-4">
+            {root ? (
+              <TreeNode
+                node={root}
+                depth={0}
+                onSelect={handleSelectFile}
+                selectedPath={selectedPath}
+              />
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                Loading file tree…
+              </p>
+            )}
+          </div>
+        ) : null}
 
         <div className="min-w-0">
           {previewLoading ? (
             <p className="text-sm text-muted-foreground">
               Loading file preview…
             </p>
-          ) : previewError ? (
-            <p className="text-sm text-destructive">{previewError}</p>
           ) : preview ? (
             <FilePreviewPanel
               preview={preview}
               frontmatter={initialFrontmatter}
             />
           ) : (
-            <p className="text-sm text-muted-foreground">
-              Select a file to preview its contents.
-            </p>
+            <a
+              className="flex items-center justify-between gap-4 rounded-2xl border border-border/50 bg-background/40 p-4 text-sm text-muted-foreground transition hover:border-border hover:text-foreground sm:p-6"
+              href={githubUrl}
+              rel="noopener noreferrer"
+              target="_blank"
+            >
+              <span className="min-w-0">
+                Read the full instructions for {skillName} on GitHub.
+              </span>
+              <span className="shrink-0 font-semibold text-primary">
+                View on GitHub
+              </span>
+            </a>
           )}
         </div>
       </div>

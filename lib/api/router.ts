@@ -613,69 +613,6 @@ const skillFile = os
     }
   });
 
-const skillMarkdown = os
-  .input(z.object({ id: z.string() }))
-  .handler(async ({ input, context }) => {
-    const params = parseSkillId(input.id);
-    if (!params) {
-      throw new Error("Invalid skill id.");
-    }
-
-    const { owner, repo, skillDir } = params;
-    const repoId = `${owner}/${repo}`;
-    const [repoRow] = await db
-      .select({ skillsPath: reposTable.skillsPath })
-      .from(reposTable)
-      .where(eq(reposTable.id, repoId))
-      .limit(1);
-    const basePath = resolveSkillsPath(repoRow?.skillsPath);
-    const configuredPrefix = joinSkillsPath(basePath, skillDir);
-
-    const headers = (context as { headers?: Headers })?.headers;
-    const token =
-      headers?.get("x-github-token") ?? env.GITHUB_TOKEN ?? undefined;
-
-    try {
-      const loadSkillMarkdown = async (skillPath: string) => {
-        const response = await fetchFileContent(owner, repo, skillPath, token);
-        if (response.type !== "file") {
-          return null;
-        }
-        if (!response.content || response.encoding !== "base64") {
-          return null;
-        }
-        const decoded = Buffer.from(response.content, "base64").toString(
-          "utf-8"
-        );
-        return {
-          path: skillPath,
-          size: response.size,
-          content: decoded,
-        };
-      };
-
-      const entries = await fetchRepoTree(owner, repo, token);
-      const resolvedPrefix = resolveSkillPrefixFromTree({
-        entries,
-        basePath,
-        skillDir,
-      });
-      const resolvedSkillPath = resolvedPrefix
-        ? `${resolvedPrefix}/SKILL.md`
-        : "SKILL.md";
-      return loadSkillMarkdown(resolvedSkillPath).catch(() => null);
-    } catch (error) {
-      console.error("skills.markdown failed", {
-        id: input.id,
-        owner,
-        repo,
-        path: configuredPrefix ? `${configuredPrefix}/SKILL.md` : "SKILL.md",
-        error,
-      });
-      return null;
-    }
-  });
-
 export const router = {
   skills: {
     list: listSkills,
@@ -685,7 +622,6 @@ export const router = {
     related: relatedSkills,
     tree: skillTree,
     file: skillFile,
-    markdown: skillMarkdown,
   },
   authors: {
     summary: authorSummary,

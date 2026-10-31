@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { reposTable } from "@/db/schema";
+import { reposTable, skillsTable } from "@/db/schema";
 import { env } from "@/env";
 import { fetchBlobContent, fetchRepoTree } from "@/lib/github-files";
 import {
@@ -8,6 +8,7 @@ import {
   resolveSkillPrefixFromTree,
   resolveSkillsPath,
 } from "@/lib/skill-path";
+import { skillGithubUrl } from "@/lib/skill-seo";
 import archiver from "archiver";
 import { NextResponse } from "next/server";
 import { PassThrough, Readable } from "node:stream";
@@ -30,8 +31,12 @@ export async function GET(
   const { owner, repo, skillDir } = skillParams;
   const repoId = `${owner}/${repo}`;
   const [repoRow] = await db
-    .select({ skillsPath: reposTable.skillsPath })
+    .select({
+      skillsPath: reposTable.skillsPath,
+      bodyPath: skillsTable.bodyPath,
+    })
     .from(reposTable)
+    .leftJoin(skillsTable, eq(skillsTable.id, `${repoId}/${skillDir}`))
     .where(eq(reposTable.id, repoId))
     .limit(1);
   const basePath = resolveSkillsPath(repoRow?.skillsPath);
@@ -111,8 +116,13 @@ export async function GET(
       prefix: configuredPrefix,
       error,
     });
-    const message =
-      error instanceof Error ? error.message : "Failed to build download.";
-    return NextResponse.json({ error: message }, { status: 502 });
+    // Temporary and uncached: the zip works again once GitHub answers.
+    return new Response(null, {
+      status: 302,
+      headers: {
+        Location: skillGithubUrl(repoId, repoRow?.bodyPath ?? null),
+        "Cache-Control": "no-store",
+      },
+    });
   }
 }
