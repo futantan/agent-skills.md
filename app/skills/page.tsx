@@ -1,15 +1,21 @@
 import { PaginationNav } from "@/components/pagination-nav";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
-import { SkillCard } from "@/components/skill-card";
 import { client } from "@/lib/api/orpc";
-import { parseHubPage, skillHubPath } from "@/lib/skill-seo";
+import {
+  parseHubPage,
+  skillHubPath,
+  skillPath,
+  summarize,
+} from "@/lib/skill-seo";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 type SkillsHubProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
+
+const DESCRIPTION_PREVIEW_LENGTH = 140;
 
 const DESCRIPTION =
   "Browse the top Agent Skills, ranked by GitHub stars, each with its full SKILL.md and an install command.";
@@ -61,11 +67,28 @@ export default async function SkillsHubPage({ searchParams }: SkillsHubProps) {
           </p>
         </div>
 
-        <div className="grid auto-rows-[280px] gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        {/* Plain links and text: a hub page lists 100 skills, so per-item markup
+            and client components are what weigh it down. */}
+        <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {skills.items.map((skill) => (
-            <SkillCard key={skill.id} skill={skill} index={0} />
+            <li key={skill.id}>
+              <a
+                className="group block h-full rounded-2xl border border-border/40 bg-card/50 p-4 transition hover:border-border hover:bg-card"
+                href={skillPath(skill.id)}
+              >
+                <span className="block font-semibold text-foreground group-hover:text-primary">
+                  {skill.name}
+                </span>
+                <span className="mt-1 block text-sm text-muted-foreground">
+                  {summarize(skill.description, DESCRIPTION_PREVIEW_LENGTH)}
+                </span>
+                <span className="mt-2 block text-xs text-muted-foreground">
+                  ★ {(skill.repoStars ?? 0).toLocaleString()}
+                </span>
+              </a>
+            </li>
           ))}
-        </div>
+        </ul>
 
         <PaginationNav
           buildHref={skillHubPath}
