@@ -1,4 +1,5 @@
 import { Card } from "@/components/ui/card";
+import { skillPath } from "@/lib/skill-seo";
 import { Skill } from "@/lib/types";
 import { GitFork, Star } from "lucide-react";
 import Link from "next/link";
@@ -15,7 +16,7 @@ export function SkillCard({ skill, index }: SkillCardProps) {
   return (
     <Link
       className="group block h-full"
-      href={`/skills/${skill.id}`}
+      href={skillPath(skill.id)}
       style={{ animationDelay: `${index * 50}ms` }}
     >
       <Card className="relative h-full overflow-hidden border border-border/40 bg-card/50 p-6 backdrop-blur-sm transition-all hover:border-border hover:bg-card hover:shadow-lg hover:shadow-primary/5 animate-fade-in-up">

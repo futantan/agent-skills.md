@@ -5,6 +5,7 @@ import { desc, eq, sql } from "drizzle-orm";
 import { unstable_cache } from "next/cache";
 
 export const BROWSE_REVALIDATE_SECONDS = 300;
+const SITEMAP_REVALIDATE_SECONDS = 3600;
 
 const buildTagMatch = (normalizedTag: string) =>
   sql`array_position(${skillsTable.tags}, ${normalizedTag}) is not null`;
@@ -406,3 +407,20 @@ export async function fetchCategorySkillsPage(input: {
 }) {
   return fetchCategorySkillsPageCached(input);
 }
+
+// bodyFetchedAt moves when the stored body does; updatedAt moves on every repo
+// sync. Strings, because unstable_cache serializes to JSON.
+export const fetchSitemapSkills = unstable_cache(
+  async () => {
+    const rows = await db
+      .select({ id: skillsTable.id, bodyFetchedAt: skillsTable.bodyFetchedAt })
+      .from(skillsTable)
+      .where(eq(skillsTable.indexable, true));
+    return rows.map(({ id, bodyFetchedAt }) => ({
+      id,
+      lastModified: (bodyFetchedAt ?? new Date(0)).toISOString(),
+    }));
+  },
+  ["sitemap-skills"],
+  { revalidate: SITEMAP_REVALIDATE_SECONDS }
+);

@@ -11,6 +11,12 @@ export function SiteHeader() {
 
         <nav className="flex items-center gap-2">
           <Link
+            className={buttonVariants({ variant: "ghost", size: "sm" })}
+            href="/skills"
+          >
+            Browse
+          </Link>
+          <Link
             className={buttonVariants({ variant: "default", size: "sm" })}
             href="/submit"
           >
